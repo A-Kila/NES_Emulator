@@ -51,8 +51,14 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-#Visual Studio Code
+# Visual Studio Code
 .vscode
 
-#Build
+# Format
+.clang-format
+
+# Build Folder
 build
+
+# Compiler Cache 
+.cache
