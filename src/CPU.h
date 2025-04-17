@@ -137,16 +137,18 @@ private:
     bool xxx(); // Illegal opcode, Type: Other
 
     // Helper functions
-    uint8_t get_flag(status_flag flag);
+    bool get_flag(status_flag flag);
     void set_flag(status_flag flag, bool value);
-    uint8_t fetch();
+
+    void zero_page_add(uint8_t register_value);
+    bool absolute_add(uint8_t register_value);
 
 private:
     bus_ref_t bus_; // Pointer to the bus
 
     registers_t registers_; // CPU registers
     uint8_t fetched_; // Fetched data
-    uint16_t addr_absolute_; // Absolute address
+    uint16_t addr_indirect_; // Absolute address
     uint16_t addr_relative_; // Relative address
     uint8_t opcode_; // Current opcode
     uint8_t cycles_; // Cycles remaining

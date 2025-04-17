@@ -1,5 +1,7 @@
 #include "cpu.h"
 #include "bus.h"
+#include <_types/_uint16_t.h>
+#include <_types/_uint8_t.h>
 #include <vector>
 
 namespace NES {
@@ -10,7 +12,7 @@ cpu_t::cpu_t(bus_ref_t bus) :
     bus_(bus),
     registers_(),
     fetched_(),
-    addr_absolute_(),
+    addr_indirect_(),
     addr_relative_(),
     opcode_(),
     cycles_()
@@ -217,6 +219,8 @@ void cpu_t::nonmaskable_interrupt()
 }
 
 // Addressing modes --------------------------------
+
+/* Does not need to read from bus */
 bool cpu_t::implicit()
 {
     return false;
@@ -224,61 +228,106 @@ bool cpu_t::implicit()
 
 bool cpu_t::immediate()
 {
+    fetched_ = bus_->read(registers_.pc++);
+
     return false;
 }
 
+/* Instructions operate on the accumulator */
 bool cpu_t::accumulator()
 {
+    fetched_ = registers_.a;
+
     return false;
 }
 
 bool cpu_t::zero_page()
 {
+    zero_page_add(0);
     return false;
 }
 
 bool cpu_t::zero_page_x()
 {
+    zero_page_add(registers_.x);
     return false;
 }
 
 bool cpu_t::zero_page_y()
 {
+    zero_page_add(registers_.y);
     return false;
 }
 
 bool cpu_t::absolute()
 {
-    return false;
+    return absolute_add(0);
 }
 
 bool cpu_t::absolute_x()
 {
-    return false;
+    return absolute_add(registers_.x);
 }
 
 bool cpu_t::absolute_y()
 {
-    return false;
+    return absolute_add(registers_.y);
 }
 
 bool cpu_t::indirect()
 {
+    uint8_t direct_addr_low = bus_->read(registers_.pc++);
+    uint8_t direct_addr_high = bus_->read(registers_.pc++);
+
+    uint16_t direct_addr = (direct_addr_high << 8) + direct_addr_low;
+
+    uint8_t indirect_addr_low = bus_->read(direct_addr);
+    uint8_t indirect_addr_high = bus_->read(direct_addr + 1);
+
+    // Simulate the 6502 bug: 
+    // If the low byte is 0xFF, cpu increments it by one but forgets to increment the high byte
+    // The address becomes OxHi00 instead of (OxHiLo + 1)
+    if (direct_addr_low == 0x00FF) indirect_addr_high = bus_->read(direct_addr & 0xFF00);
+
+    addr_indirect_ = (indirect_addr_high << 8) + indirect_addr_low;
+
     return false;
 }
 
 bool cpu_t::indexed_indirect_x()
 {
+    uint8_t direct_zero_page_addr = bus_->read(registers_.pc++);
+    direct_zero_page_addr += registers_.x;
+
+    uint8_t indirect_addr_low = bus_->read(direct_zero_page_addr++); // Since indirect_addr_low is 8bit it will wrap around
+    uint8_t indirect_addr_high = bus_->read(direct_zero_page_addr);
+
+    addr_indirect_ = (indirect_addr_high << 8) + indirect_addr_low;
+
     return false;
 }
 
 bool cpu_t::indirect_indexed_y()
 {
-    return false;
+    uint8_t direct_zero_page_addr = bus_->read(registers_.pc++);
+
+    uint8_t indirect_addr_low = bus_->read(direct_zero_page_addr++); // Since indirect_addr_low is 8bit it will wrap around
+    uint8_t indirect_addr_high = bus_->read(direct_zero_page_addr);
+
+    uint16_t sum_low = indirect_addr_low + registers_.y;
+
+    addr_indirect_ = (indirect_addr_high << 8) + sum_low;
+
+    return sum_low > 0x00FF;
 }
 
 bool cpu_t::relative()
 {
+    addr_relative_ = bus_->read(registers_.pc++);
+
+    // If the sign bit is set
+    if (addr_relative_ & 0x80) addr_relative_ |= 0xFF00; // Negative address
+
     return false;
 }
 
@@ -568,5 +617,38 @@ bool cpu_t::xxx()
 {
     return false;
 }
+
+// Helper functions --------------------------------
+bool cpu_t::get_flag(status_flag flag)
+{
+    return registers_.status & flag;
+}
+
+void cpu_t::set_flag(status_flag flag, bool value)
+{
+    if (value) registers_.status |= flag;
+    else registers_.status &= ~flag;
+}
+
+void cpu_t::zero_page_add(uint8_t register_value)
+{
+    uint8_t addr_zero_page = bus_->read(registers_.pc++);
+    uint8_t new_addr = (addr_zero_page + register_value) & 0x00FF;
+    fetched_ = bus_->read(new_addr);
+}
+
+bool cpu_t::absolute_add(uint8_t register_value)
+{
+    uint16_t addr_low = bus_->read(registers_.pc++);
+    uint16_t addr_high = bus_->read(registers_.pc++);
+
+    uint16_t sum_low = addr_low + register_value;
+
+    uint16_t addr_absolute = (addr_high << 8) + sum_low;
+    fetched_ = bus_->read(addr_indirect_);
+
+    return sum_low > 0x00FF;
+}
+
 
 }
