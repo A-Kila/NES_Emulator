@@ -11,8 +11,7 @@ namespace NES {
 cpu_t::cpu_t(bus_ref_t bus) :
     bus_(bus),
     registers_(),
-    fetched_(),
-    addr_indirect_(),
+    addr_absolute_(),
     addr_relative_(),
     opcode_(),
     cycles_()
@@ -228,16 +227,14 @@ bool cpu_t::implicit()
 
 bool cpu_t::immediate()
 {
-    fetched_ = bus_->read(registers_.pc++);
+    addr_absolute_ = registers_.pc++;
 
     return false;
 }
 
-/* Instructions operate on the accumulator */
+/* Instructions operate on the accumulator, no address, works like implicit */
 bool cpu_t::accumulator()
 {
-    fetched_ = registers_.a;
-
     return false;
 }
 
@@ -289,7 +286,7 @@ bool cpu_t::indirect()
     // The address becomes OxHi00 instead of (OxHiLo + 1)
     if (direct_addr_low == 0x00FF) indirect_addr_high = bus_->read(direct_addr & 0xFF00);
 
-    addr_indirect_ = (indirect_addr_high << 8) + indirect_addr_low;
+    addr_absolute_ = (indirect_addr_high << 8) + indirect_addr_low;
 
     return false;
 }
@@ -302,7 +299,7 @@ bool cpu_t::indexed_indirect_x()
     uint8_t indirect_addr_low = bus_->read(direct_zero_page_addr++); // Since indirect_addr_low is 8bit it will wrap around
     uint8_t indirect_addr_high = bus_->read(direct_zero_page_addr);
 
-    addr_indirect_ = (indirect_addr_high << 8) + indirect_addr_low;
+    addr_absolute_ = (indirect_addr_high << 8) + indirect_addr_low;
 
     return false;
 }
@@ -316,7 +313,7 @@ bool cpu_t::indirect_indexed_y()
 
     uint16_t sum_low = indirect_addr_low + registers_.y;
 
-    addr_indirect_ = (indirect_addr_high << 8) + sum_low;
+    addr_absolute_ = (indirect_addr_high << 8) + sum_low;
 
     return sum_low > 0x00FF;
 }
@@ -633,8 +630,7 @@ void cpu_t::set_flag(status_flag flag, bool value)
 void cpu_t::zero_page_add(uint8_t register_value)
 {
     uint8_t addr_zero_page = bus_->read(registers_.pc++);
-    uint8_t new_addr = (addr_zero_page + register_value) & 0x00FF;
-    fetched_ = bus_->read(new_addr);
+    addr_absolute_ = (addr_zero_page + register_value) & 0x00FF;
 }
 
 bool cpu_t::absolute_add(uint8_t register_value)
@@ -644,11 +640,9 @@ bool cpu_t::absolute_add(uint8_t register_value)
 
     uint16_t sum_low = addr_low + register_value;
 
-    uint16_t addr_absolute = (addr_high << 8) + sum_low;
-    fetched_ = bus_->read(addr_indirect_);
+    addr_absolute_ = (addr_high << 8) + sum_low;
 
     return sum_low > 0x00FF;
 }
-
 
 }

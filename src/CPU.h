@@ -147,8 +147,7 @@ private:
     bus_ref_t bus_; // Pointer to the bus
 
     registers_t registers_; // CPU registers
-    uint8_t fetched_; // Fetched data
-    uint16_t addr_indirect_; // Absolute address
+    uint16_t addr_absolute_; // Absolute address
     uint16_t addr_relative_; // Relative address
     uint8_t opcode_; // Current opcode
     uint8_t cycles_; // Cycles remaining
