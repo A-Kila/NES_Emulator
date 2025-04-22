@@ -60,7 +60,7 @@ private:
         uint8_t cycles;
     };
 
-private:
+protected:
     // Addressing modes (returns true if additional clock cycles are needed)
     bool implicit();
     bool immediate();
@@ -136,6 +136,7 @@ private:
 
     bool xxx(); // Illegal opcode, Type: Other
 
+private:
     // Helper functions
     bool get_flag(status_flag flag);
     void set_flag(status_flag flag, bool value);
