@@ -11,8 +11,6 @@ namespace NES {
 cpu_t::cpu_t(bus_ref_t bus) :
     bus_(bus),
     registers_(),
-    addr_absolute_(),
-    addr_relative_(),
     opcode_(),
     cycles_()
 {
@@ -190,14 +188,16 @@ void cpu_t::clock()
 {
     if (cycles_ == 0)
     {
+        // FIXME: opcode_ var could probably be a local variable instead of a class var
         opcode_ = bus_->read(registers_.pc);
 
         registers_.pc++;
         cycles_ = instruction_lookup_[opcode_].cycles;
 
+        uint16_t address;
         bool additional_cycle = false;
-        additional_cycle |= (this->*instruction_lookup_[opcode_].addr_mode)();
-        additional_cycle |= (this->*instruction_lookup_[opcode_].operation)();
+        additional_cycle |= (this->*instruction_lookup_[opcode_].addr_mode)(address);
+        additional_cycle |= (this->*instruction_lookup_[opcode_].operation)(address);
 
         cycles_ += (uint8_t)additional_cycle;
     }
@@ -220,58 +220,58 @@ void cpu_t::nonmaskable_interrupt()
 // Addressing modes --------------------------------
 
 /* Does not need to read from bus */
-bool cpu_t::implicit()
+bool cpu_t::implicit(uint16_t &address)
 {
     return false;
 }
 
-bool cpu_t::immediate()
+bool cpu_t::immediate(uint16_t &address)
 {
-    addr_absolute_ = registers_.pc++;
+    address = registers_.pc++;
 
     return false;
 }
 
 /* Instructions operate on the accumulator, no address, works like implicit */
-bool cpu_t::accumulator()
+bool cpu_t::accumulator(uint16_t &address)
 {
     return false;
 }
 
-bool cpu_t::zero_page()
+bool cpu_t::zero_page(uint16_t &address)
 {
-    zero_page_add(0);
+    _zero_page_add(address, 0);
     return false;
 }
 
-bool cpu_t::zero_page_x()
+bool cpu_t::zero_page_x(uint16_t &address)
 {
-    zero_page_add(registers_.x);
+    _zero_page_add(address, registers_.x);
     return false;
 }
 
-bool cpu_t::zero_page_y()
+bool cpu_t::zero_page_y(uint16_t &address)
 {
-    zero_page_add(registers_.y);
+    _zero_page_add(address, registers_.y);
     return false;
 }
 
-bool cpu_t::absolute()
+bool cpu_t::absolute(uint16_t &address)
 {
-    return absolute_add(0);
+    return _absolute_add(address, 0);
 }
 
-bool cpu_t::absolute_x()
+bool cpu_t::absolute_x(uint16_t &address)
 {
-    return absolute_add(registers_.x);
+    return _absolute_add(address, registers_.x);
 }
 
-bool cpu_t::absolute_y()
+bool cpu_t::absolute_y(uint16_t &address)
 {
-    return absolute_add(registers_.y);
+    return _absolute_add(address, registers_.y);
 }
 
-bool cpu_t::indirect()
+bool cpu_t::indirect(uint16_t &address)
 {
     uint8_t direct_addr_low = bus_->read(registers_.pc++);
     uint8_t direct_addr_high = bus_->read(registers_.pc++);
@@ -286,12 +286,12 @@ bool cpu_t::indirect()
     // The address becomes OxHi00 instead of (OxHiLo + 1)
     if (direct_addr_low == 0x00FF) indirect_addr_high = bus_->read(direct_addr & 0xFF00);
 
-    addr_absolute_ = (indirect_addr_high << 8) + indirect_addr_low;
+    address = (indirect_addr_high << 8) + indirect_addr_low;
 
     return false;
 }
 
-bool cpu_t::indexed_indirect_x()
+bool cpu_t::indexed_indirect_x(uint16_t &address)
 {
     uint8_t direct_zero_page_addr = bus_->read(registers_.pc++);
     direct_zero_page_addr += registers_.x;
@@ -299,12 +299,12 @@ bool cpu_t::indexed_indirect_x()
     uint8_t indirect_addr_low = bus_->read(direct_zero_page_addr++); // Since indirect_addr_low is 8bit it will wrap around
     uint8_t indirect_addr_high = bus_->read(direct_zero_page_addr);
 
-    addr_absolute_ = (indirect_addr_high << 8) + indirect_addr_low;
+    address = (indirect_addr_high << 8) + indirect_addr_low;
 
     return false;
 }
 
-bool cpu_t::indirect_indexed_y()
+bool cpu_t::indirect_indexed_y(uint16_t &address)
 {
     uint8_t direct_zero_page_addr = bus_->read(registers_.pc++);
 
@@ -313,334 +313,338 @@ bool cpu_t::indirect_indexed_y()
 
     uint16_t sum_low = indirect_addr_low + registers_.y;
 
-    addr_absolute_ = (indirect_addr_high << 8) + sum_low;
+    address = (indirect_addr_high << 8) + sum_low;
 
     return sum_low > 0x00FF;
 }
 
-bool cpu_t::relative()
+bool cpu_t::relative(uint16_t &address)
 {
-    addr_relative_ = bus_->read(registers_.pc++);
+    address = bus_->read(registers_.pc++);
 
     // If the sign bit is set
-    if (addr_relative_ & 0x80) addr_relative_ |= 0xFF00; // Negative address
+    if (address & 0x80) address |= 0xFF00; // Negative address
 
     return false;
 }
 
 // Instructions --------------------------------------------
 
-bool cpu_t::adc()
+bool cpu_t::adc(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::and_()
+bool cpu_t::and_(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::asl()
+bool cpu_t::asl(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::bcc()
+bool cpu_t::bcc(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::bcs()
+bool cpu_t::bcs(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::beq()
+bool cpu_t::beq(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::bit()
+bool cpu_t::bit(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::bmi()
+bool cpu_t::bmi(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::bne()
+bool cpu_t::bne(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::bpl()
+bool cpu_t::bpl(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::brk()
+bool cpu_t::brk(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::bvc()
+bool cpu_t::bvc(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::bvs()
+bool cpu_t::bvs(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::clc()
+bool cpu_t::clc(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::cld()
+bool cpu_t::cld(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::cli()
+bool cpu_t::cli(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::clv()
+bool cpu_t::clv(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::cmp()
+bool cpu_t::cmp(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::cpx()
+bool cpu_t::cpx(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::cpy()
+bool cpu_t::cpy(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::dec()
+bool cpu_t::dec(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::dex()
+bool cpu_t::dex(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::dey()
+bool cpu_t::dey(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::eor()
+bool cpu_t::eor(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::inc()
+bool cpu_t::inc(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::inx()
+bool cpu_t::inx(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::iny()
+bool cpu_t::iny(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::jmp()
+bool cpu_t::jmp(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::jsr()
+bool cpu_t::jsr(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::lda()
+bool cpu_t::lda(uint16_t address)
+{
+    registers_.a = bus_->read(address);
+
+    // set_flag()
+
+    return false;
+}
+
+bool cpu_t::ldx(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::ldx()
+bool cpu_t::ldy(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::ldy()
+bool cpu_t::lsr(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::lsr()
+bool cpu_t::nop(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::nop()
+bool cpu_t::ora(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::ora()
+bool cpu_t::pha(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::pha()
+bool cpu_t::php(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::php()
+bool cpu_t::pla(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::pla()
+bool cpu_t::plp(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::plp()
+bool cpu_t::rol(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::rol()
+bool cpu_t::ror(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::ror()
+bool cpu_t::rti(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::rti()
+bool cpu_t::rts(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::rts()
+bool cpu_t::sbc(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::sbc()
+bool cpu_t::sec(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::sec()
+bool cpu_t::sed(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::sed()
+bool cpu_t::sei(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::sei()
+bool cpu_t::sta(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::sta()
+bool cpu_t::stx(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::stx()
+bool cpu_t::sty(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::sty()
+bool cpu_t::tax(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::tax()
+bool cpu_t::tay(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::tay()
+bool cpu_t::tsx(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::tsx()
+bool cpu_t::txa(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::txa()
+bool cpu_t::txs(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::txs()
+bool cpu_t::tya(uint16_t address)
 {
     return false;
 }
 
-bool cpu_t::tya()
-{
-    return false;
-}
-
-bool cpu_t::xxx()
+bool cpu_t::xxx(uint16_t _)
 {
     return false;
 }
 
 // Helper functions --------------------------------
-bool cpu_t::get_flag(status_flag flag)
+bool cpu_t::_get_flag(status_flag flag)
 {
     return registers_.status & flag;
 }
 
-void cpu_t::set_flag(status_flag flag, bool value)
+void cpu_t::_set_flag(status_flag flag, bool value)
 {
     if (value) registers_.status |= flag;
     else registers_.status &= ~flag;
 }
 
-void cpu_t::zero_page_add(uint8_t register_value)
+void cpu_t::_zero_page_add(uint16_t &address, uint8_t register_value)
 {
     uint8_t addr_zero_page = bus_->read(registers_.pc++);
-    addr_absolute_ = (addr_zero_page + register_value) & 0x00FF;
+    address = (addr_zero_page + register_value) & 0x00FF;
 }
 
-bool cpu_t::absolute_add(uint8_t register_value)
+bool cpu_t::_absolute_add(uint16_t &address, uint8_t register_value)
 {
     uint16_t addr_low = bus_->read(registers_.pc++);
     uint16_t addr_high = bus_->read(registers_.pc++);
 
     uint16_t sum_low = addr_low + register_value;
 
-    addr_absolute_ = (addr_high << 8) + sum_low;
+    address = (addr_high << 8) + sum_low;
 
     return sum_low > 0x00FF;
 }
