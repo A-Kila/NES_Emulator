@@ -10,7 +10,7 @@ class cpu_t
 {
 public:
     cpu_t(bus_ref_t bus);
-    ~cpu_t();
+    virtual ~cpu_t();
 
 public:
     // Signals
