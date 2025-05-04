@@ -1,25 +1,37 @@
+#include <vector>
+#include "bus.h"
 #include "cpu.h"
 
 namespace NES_test {
 
-class testable_cpu_t : public NES::cpu_t
+class bus_stub_t : public NES::i_bus_t
 {
 public:
-    testable_cpu_t(NES::bus_ref_t bus) : cpu_t(bus) {}
+    bus_stub_t() : size_(sizeof(ram))
+    {
+        for (int i = 0; i < 0x1000; i++)
+            ram[i] = 0x00;
+    }
 
-    void implicit() { cpu_t::implicit(); }
-    void immediate() { cpu_t::immediate(); }
-    void accumulator() { cpu_t::accumulator(); }
-    void zero_page() { cpu_t::zero_page(); }
-    void zero_page_x() { cpu_t::zero_page_x(); }
-    void zero_page_y() { cpu_t::zero_page_y(); }
-    void absolute() { cpu_t::absolute(); }
-    void absolute_x() { cpu_t::absolute_x(); }
-    void absolute_y() { cpu_t::absolute_y(); }
-    void indexed_indirect_x() { cpu_t::indexed_indirect_x(); }
-    void indirect_indexed_y() { cpu_t::indirect_indexed_y(); }
-    void relative() { cpu_t::relative(); }
+    void write(uint16_t addr, uint8_t data) override
+    {
+        if (addr < size_)
+            ram[addr] = data;
+    }
 
+    uint8_t read(uint16_t addr) override
+    {
+        if (addr < size_)
+            return ram[addr];
+
+        return 0x00;
+    }
+
+private:
+    uint8_t ram[0xFFFF];
+    uint16_t size_;
 };
 
-}
+typedef std::shared_ptr<NES::cpu_t> cpu_ref_t;
+
+} // namespace NES_test
