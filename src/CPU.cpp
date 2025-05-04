@@ -195,9 +195,9 @@ void cpu_t::clock()
         cycles_ = instruction_lookup_[opcode_].cycles;
 
         uint16_t address;
-        bool additional_cycle = false;
-        additional_cycle |= (this->*instruction_lookup_[opcode_].addr_mode)(address);
-        additional_cycle |= (this->*instruction_lookup_[opcode_].operation)(address);
+        bool additional_cycle = true;
+        additional_cycle &= (this->*instruction_lookup_[opcode_].addr_mode)(address);
+        additional_cycle &= (this->*instruction_lookup_[opcode_].operation)(address);
 
         cycles_ += (uint8_t)additional_cycle;
     }
@@ -325,7 +325,8 @@ bool cpu_t::relative(uint16_t &address)
     // If the sign bit is set
     if (address & 0x80) address |= 0xFF00; // Negative address
 
-    return false;
+    // If page crossed, extra cycle needed
+    return (registers_.pc & 0xFF00) != ((registers_.pc + address) & 0xFF00);
 }
 
 // Instructions --------------------------------------------
@@ -377,7 +378,12 @@ bool cpu_t::bne(uint16_t address)
 
 bool cpu_t::bpl(uint16_t address)
 {
-    return false;
+    if (_get_flag(status_flag::negative)) return false;
+
+    cycles_++;
+    registers_.pc += address;
+
+    return true;
 }
 
 bool cpu_t::brk(uint16_t address)
@@ -467,6 +473,8 @@ bool cpu_t::iny(uint16_t address)
 
 bool cpu_t::jmp(uint16_t address)
 {
+    registers_.pc = address;
+
     return false;
 }
 
@@ -479,19 +487,30 @@ bool cpu_t::lda(uint16_t address)
 {
     registers_.a = bus_->read(address);
 
-    // set_flag()
+    _set_flag(status_flag::zero, registers_.a == 0);
+    _set_flag(status_flag::negative, registers_.a >> 7);
 
-    return false;
+    return true;
 }
 
 bool cpu_t::ldx(uint16_t address)
 {
-    return false;
+    registers_.x = bus_->read(address);
+
+    _set_flag(status_flag::zero, registers_.x == 0);
+    _set_flag(status_flag::negative, registers_.x >> 7);
+
+    return true;
 }
 
 bool cpu_t::ldy(uint16_t address)
 {
-    return false;
+    registers_.y = bus_->read(address);
+
+    _set_flag(status_flag::zero, registers_.y == 0);
+    _set_flag(status_flag::negative, registers_.y >> 7);
+
+    return true;
 }
 
 bool cpu_t::lsr(uint16_t address)
@@ -571,16 +590,19 @@ bool cpu_t::sei(uint16_t address)
 
 bool cpu_t::sta(uint16_t address)
 {
+    bus_->write(address, registers_.a);
     return false;
 }
 
 bool cpu_t::stx(uint16_t address)
 {
+    bus_->write(address, registers_.x);
     return false;
 }
 
 bool cpu_t::sty(uint16_t address)
 {
+    bus_->write(address, registers_.y);
     return false;
 }
 
