@@ -46,7 +46,7 @@ private:
         zero = (1 << 1),
         no_interrupts = (1 << 2),
         decimal = (1 << 3),
-        breaks = (1 << 4),
+        b = (1 << 4),
         unused = (1 << 5),
         overflow = (1 << 6),
         negative = (1 << 7)
@@ -55,7 +55,7 @@ private:
     struct instruction_t
     {
         const char *name;
-        bool (cpu_t:: *operation)(uint16_t address);
+        bool (cpu_t:: *operation)(const uint16_t address);
         bool (cpu_t:: *addr_mode)(uint16_t &address);
         uint8_t cycles;
     };
@@ -77,81 +77,95 @@ protected:
     bool relative(uint16_t &address);
 
     // Instructions (returns true if additional clock cycles are needed)
-    bool adc(uint16_t address);  // Add with carry, Type: Arithmetic
-    bool and_(uint16_t address); // Bitwise AND, Type: Bitwise   (and is a keyword, thus we use and_)
-    bool asl(uint16_t address);  // Arithmetic Shift Left, Type: Shift
-    bool bcc(uint16_t address);  // Branch if Carry Clear, Type: Branch
-    bool bcs(uint16_t address);  // Branch if Carry Set, Type: Branch
-    bool beq(uint16_t address);  // Branch if Equal, Type: Branch
-    bool bit(uint16_t address);  // Bit Test, Type: Bitwise
-    bool bmi(uint16_t address);  // Branch if Minus, Type: Branch
-    bool bne(uint16_t address);  // Branch if Not Equal, Type: Branch
-    bool bpl(uint16_t address);  // Branch if Plus, Type: Branch
-    bool brk(uint16_t address);  // Force Break, Type: Jump
-    bool bvc(uint16_t address);  // Branch if Overflow Clear, Type: Branch
-    bool bvs(uint16_t address);  // Branch if Overflow Set, Type: Branch
-    bool clc(uint16_t address);  // Clear Carry Flag, Type: Flags
-    bool cld(uint16_t address);  // Clear Decimal, Type: Flags
-    bool cli(uint16_t address);  // Clear Interrupt Disable, Type: Flags
-    bool clv(uint16_t address);  // Clear Overflow, Type: Flags
-    bool cmp(uint16_t address);  // Compare A, Type: Compare
-    bool cpx(uint16_t address);  // Compare X, Type: Compare
-    bool cpy(uint16_t address);  // Compare Y, Type: Compare
-    bool dec(uint16_t address);  // Decrement Memory, Type: Arithmetic
-    bool dex(uint16_t address);  // Decrement X, Type: Arithmetic
-    bool dey(uint16_t address);  // Decrement Y, Type: Arithmetic
-    bool eor(uint16_t address);  // Bitwise Exclusive OR, Type: Bitwise
-    bool inc(uint16_t address);  // Increment Memory, Type: Arithmetic
-    bool inx(uint16_t address);  // Increment X, Type: Arithmetic
-    bool iny(uint16_t address);  // Increment Y, Type: Arithmetic
-    bool jmp(uint16_t address);  // Jump to Address, Type: Jump
-    bool jsr(uint16_t address);  // Jump to Subroutine, Type: Jump
-    bool lda(uint16_t address);  // Load A, Type: Access
-    bool ldx(uint16_t address);  // Load X, Type: Access
-    bool ldy(uint16_t address);  // Load Y, Type: Access
-    bool lsr(uint16_t address);  // Logical Shift Right, Type: Shift
-    bool nop(uint16_t address);  // No Operation, Type: Other
-    bool ora(uint16_t address);  // Bitwise OR, Type: Bitwise
-    bool pha(uint16_t address);  // Push A, Type: Stack
-    bool php(uint16_t address);  // Push Processor Status, Type: Stack
-    bool pla(uint16_t address);  // Pull A, Type: Stack
-    bool plp(uint16_t address);  // Pull Processor Status, Type: Stack
-    bool rol(uint16_t address);  // Rotate Left, Type: Shift
-    bool ror(uint16_t address);  // Rotate Right, Type: Shift
-    bool rti(uint16_t address);  // Return from Interrupt, Type: Jump
-    bool rts(uint16_t address);  // Return from Subroutine, Type: Jump
-    bool sbc(uint16_t address);  // Subtract with Carry, Type: Arithmetic
-    bool sec(uint16_t address);  // Set Carry, Type: Flags
-    bool sed(uint16_t address);  // Set Decimal, Type: Flags
-    bool sei(uint16_t address);  // Set Interrupt Disable, Type: Flags
-    bool sta(uint16_t address);  // Store A, Type: Access
-    bool stx(uint16_t address);  // Store X, Type: Access
-    bool sty(uint16_t address);  // Store Y, Type: Access
-    bool tax(uint16_t address);  // Transfer A to X, Type: Transfer
-    bool tay(uint16_t address);  // Transfer A to Y, Type: Transfer
-    bool tsx(uint16_t address);  // Transfer Stack Pointer to X, Type: Stack
-    bool txa(uint16_t address);  // Transfer X to A, Type: Transfer
-    bool txs(uint16_t address);  // Transfer X to Stack Pointer, Type: Stack
-    bool tya(uint16_t address);  // Transfer Y to A, Type: Transfer
+    bool adc(const uint16_t address);  // Add with carry, Type: Arithmetic
+    bool and_(const uint16_t address); // Bitwise AND, Type: Bitwise   (and is a keyword, thus we use and_)
+    bool asl(const uint16_t address);  // Arithmetic Shift Left, Type: Shift
+    bool bcc(const uint16_t address);  // Branch if Carry Clear, Type: Branch
+    bool bcs(const uint16_t address);  // Branch if Carry Set, Type: Branch
+    bool beq(const uint16_t address);  // Branch if Equal, Type: Branch
+    bool bit(const uint16_t address);  // Bit Test, Type: Bitwise
+    bool bmi(const uint16_t address);  // Branch if Minus, Type: Branch
+    bool bne(const uint16_t address);  // Branch if Not Equal, Type: Branch
+    bool bpl(const uint16_t address);  // Branch if Plus, Type: Branch
+    bool brk(const uint16_t address);  // Force Break, Type: Jump
+    bool bvc(const uint16_t address);  // Branch if Overflow Clear, Type: Branch
+    bool bvs(const uint16_t address);  // Branch if Overflow Set, Type: Branch
+    bool clc(const uint16_t address);  // Clear Carry Flag, Type: Flags
+    bool cld(const uint16_t address);  // Clear Decimal, Type: Flags
+    bool cli(const uint16_t address);  // Clear Interrupt Disable, Type: Flags
+    bool clv(const uint16_t address);  // Clear Overflow, Type: Flags
+    bool cmp(const uint16_t address);  // Compare A, Type: Compare
+    bool cpx(const uint16_t address);  // Compare X, Type: Compare
+    bool cpy(const uint16_t address);  // Compare Y, Type: Compare
+    bool dec(const uint16_t address);  // Decrement Memory, Type: Arithmetic
+    bool dex(const uint16_t address);  // Decrement X, Type: Arithmetic
+    bool dey(const uint16_t address);  // Decrement Y, Type: Arithmetic
+    bool eor(const uint16_t address);  // Bitwise Exclusive OR, Type: Bitwise
+    bool inc(const uint16_t address);  // Increment Memory, Type: Arithmetic
+    bool inx(const uint16_t address);  // Increment X, Type: Arithmetic
+    bool iny(const uint16_t address);  // Increment Y, Type: Arithmetic
+    bool jmp(const uint16_t address);  // Jump to Address, Type: Jump
+    bool jsr(const uint16_t address);  // Jump to Subroutine, Type: Jump
+    bool lda(const uint16_t address);  // Load A, Type: Access
+    bool ldx(const uint16_t address);  // Load X, Type: Access
+    bool ldy(const uint16_t address);  // Load Y, Type: Access
+    bool lsr(const uint16_t address);  // Logical Shift Right, Type: Shift
+    bool nop(const uint16_t address);  // No Operation, Type: Other
+    bool ora(const uint16_t address);  // Bitwise OR, Type: Bitwise
+    bool pha(const uint16_t address);  // Push A, Type: Stack
+    bool php(const uint16_t address);  // Push Processor Status, Type: Stack
+    bool pla(const uint16_t address);  // Pull A, Type: Stack
+    bool plp(const uint16_t address);  // Pull Processor Status, Type: Stack
+    bool rol(const uint16_t address);  // Rotate Left, Type: Shift
+    bool ror(const uint16_t address);  // Rotate Right, Type: Shift
+    bool rti(const uint16_t address);  // Return from Interrupt, Type: Jump
+    bool rts(const uint16_t address);  // Return from Subroutine, Type: Jump
+    bool sbc(const uint16_t address);  // Subtract with Carry, Type: Arithmetic
+    bool sec(const uint16_t address);  // Set Carry, Type: Flags
+    bool sed(const uint16_t address);  // Set Decimal, Type: Flags
+    bool sei(const uint16_t address);  // Set Interrupt Disable, Type: Flags
+    bool sta(const uint16_t address);  // Store A, Type: Access
+    bool stx(const uint16_t address);  // Store X, Type: Access
+    bool sty(const uint16_t address);  // Store Y, Type: Access
+    bool tax(const uint16_t address);  // Transfer A to X, Type: Transfer
+    bool tay(const uint16_t address);  // Transfer A to Y, Type: Transfer
+    bool tsx(const uint16_t address);  // Transfer Stack Pointer to X, Type: Stack
+    bool txa(const uint16_t address);  // Transfer X to A, Type: Transfer
+    bool txs(const uint16_t address);  // Transfer X to Stack Pointer, Type: Stack
+    bool tya(const uint16_t address);  // Transfer Y to A, Type: Transfer
 
-    bool xxx(uint16_t _); // Illegal opcode, Type: Other
+    bool xxx(const uint16_t _); // Illegal opcode, Type: Other
 
 private:
     // Helper functions
     bool _get_flag(status_flag flag);
-    void _set_flag(status_flag flag, bool value);
+    void _set_flag(const status_flag flag, const bool value);
 
-    void _zero_page_add(uint16_t &address, uint8_t register_value);
-    bool _absolute_add(uint16_t &address, uint8_t register_value);
+    void _push_stack(const uint8_t value);
+    uint8_t _pop_stack();
+
+    void _basic_interrupt(const uint16_t vector, const uint8_t cycles);
+
+    void _zero_page_add(uint16_t &address, const uint8_t register_value);
+    bool _absolute_add(uint16_t &address, const uint8_t register_value);
+
+    bool _relative_jump(const bool condition, const uint16_t address);
 
 private:
     bus_ref_t bus_; // Pointer to the bus
 
     registers_t registers_; // CPU registers
-    uint8_t opcode_; // Current opcode
     uint8_t cycles_; // Cycles remaining
+    bool is_addressing_accumulator_; // Addressing mode is accumulator
 
     std::vector<instruction_t> instruction_lookup_;
+
+private:
+    static constexpr uint16_t STACK_BASE = 0x0100;
+
+    static constexpr uint16_t IRQ_VECTOR = 0xFFFE;
+    static constexpr uint16_t NMI_VECTOR = 0xFFFA;
+    static constexpr uint16_t RESET_VECTOR = 0xFFFC;
 };
 
 } // namespace NES
