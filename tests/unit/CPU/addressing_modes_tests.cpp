@@ -19,11 +19,9 @@ protected:
 
     void load_instruction(uint8_t opcode, uint8_t operand1, std::optional<uint8_t> operand2 = std::nullopt)
     {
-        // Test insturction
         bus->write(local_pc++, opcode);
         bus->write(local_pc++, operand1);
-        if (operand2)
-            bus->write(local_pc++, *operand2);
+        if (operand2) bus->write(local_pc++, *operand2);
     }
 
     void run_cpu(uint16_t cycles)

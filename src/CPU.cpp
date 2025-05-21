@@ -348,7 +348,7 @@ bool cpu_t::adc(const uint16_t address)
     _set_flag(status_flag::carry, sum > 0xFF);
     _set_flag(status_flag::zero, (sum & 0xFF) == 0);
     _set_flag(status_flag::overflow, ((registers_.a ^ sum) & (value ^ sum)) >> 7);
-    _set_flag(status_flag::negative, sum >> 7);
+    _set_flag(status_flag::negative, sum & (1 << 7));
 
     registers_.a = sum & 0xFF;
     return true;
@@ -759,7 +759,7 @@ bool cpu_t::sbc(const uint16_t address)
     _set_flag(status_flag::carry, ~(sub < 0));
     _set_flag(status_flag::zero, (sub & 0xFF) == 0);
     _set_flag(status_flag::overflow, ((registers_.a ^ sub) & (value ^ sub)) >> 7);
-    _set_flag(status_flag::negative, sub >> 7);
+    _set_flag(status_flag::negative, sub & (1 << 7));
 
     return true;
 }
