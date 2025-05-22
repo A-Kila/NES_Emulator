@@ -24,7 +24,7 @@ protected:
         if (operand2) bus->write(local_pc++, *operand2);
     }
 
-    void run_cpu(uint16_t cycles)
+    void run_cpu(const uint16_t cycles)
     {
         for (int i = 0; i < cycles; i++)
             cpu->clock();
