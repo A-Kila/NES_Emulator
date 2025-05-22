@@ -756,11 +756,12 @@ bool cpu_t::sbc(const uint16_t address)
     const uint8_t value = bus_->read(address);
     const int16_t sub = registers_.a - value - !_get_flag(status_flag::carry);
 
-    _set_flag(status_flag::carry, ~(sub < 0));
+    _set_flag(status_flag::carry, !(sub < 0));
     _set_flag(status_flag::zero, (sub & 0xFF) == 0);
-    _set_flag(status_flag::overflow, ((registers_.a ^ sub) & (value ^ sub)) >> 7);
+    _set_flag(status_flag::overflow, ((registers_.a ^ sub) & (~value ^ sub)) >> 7);
     _set_flag(status_flag::negative, sub & (1 << 7));
 
+    registers_.a = sub & 0xFF;
     return true;
 }
 
