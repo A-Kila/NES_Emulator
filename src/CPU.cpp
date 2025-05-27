@@ -424,8 +424,6 @@ bool cpu_t::bpl(const uint16_t address)
 
 bool cpu_t::brk(const uint16_t address)
 {
-    registers_.pc++; // BRK skippes a byte, often considered a two byte instruction
-
     _push_stack(registers_.pc >> 8);
     _push_stack(registers_.pc & 0x00FF);
 
