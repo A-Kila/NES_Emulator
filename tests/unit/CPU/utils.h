@@ -9,7 +9,7 @@ class bus_stub_t : public NES::i_bus_t
 public:
     bus_stub_t() : size_(sizeof(ram))
     {
-        for (int i = 0; i < 0x1000; i++)
+        for (int i = 0; i < size_; i++)
             ram[i] = 0x00;
     }
 
@@ -28,8 +28,8 @@ public:
     }
 
 private:
-    uint8_t ram[0xFFFF];
-    uint16_t size_;
+    uint8_t ram[0x10000];
+    uint32_t size_;
 };
 
 typedef std::shared_ptr<NES::cpu_t> cpu_ref_t;

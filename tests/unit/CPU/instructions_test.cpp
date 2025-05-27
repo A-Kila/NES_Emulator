@@ -112,6 +112,10 @@ protected:
     uint8_t local_sp = 0xFD; // Stack pointer after reset
 
     static constexpr uint16_t STACK_BASE = 0x100;
+    static constexpr uint16_t RESET_VECTOR = 0xFFFC;
+    static constexpr uint16_t IRQ_VECTOR = 0xFFFE;
+    static constexpr uint16_t NMI_VECTOR = 0xFFFA;
+
     static constexpr uint8_t STA_ADDRESS = 0xF0;
     static constexpr uint8_t STX_ADDRESS = 0xF1;
     static constexpr uint8_t STY_ADDRESS = 0xF2;
@@ -333,17 +337,57 @@ TEST_F(InstructionTests, asl)
     EXPECT_TRUE(check_flag(carry));
 }
 
-// TODO: implement branch instructions
+// page crossing and cycle counts are tested in addressing mode tests.
 TEST_F(InstructionTests, bcc)
 {
+    load_instruction(0x38); run_cpu(2); // SEC - 2 cycles
+
+    // if branch is taken, accumulator will not be set to 0x01
+    load_instruction(0x90, 0x02); // BCC relative - 2 cycles
+    load_accumulator(0x01); run_cpu(2); // run both cycles
+    EXPECT_EQ(0x01, store_accumulator());
+
+    load_instruction(0x18); run_cpu(2); // CLC - 2 cycles
+
+    // if branch is not taken, accumulator will be not be set to 0x02
+    load_instruction(0x90, 0x01); // BCC relative - 3 cycles (taken)
+    load_instruction(0xEA); // NOP - 2 cycles
+    load_accumulator(0x02); run_cpu(3); // run both cycles
+    EXPECT_EQ(0x02, store_accumulator());
 }
 
 TEST_F(InstructionTests, bcs)
 {
+    load_instruction(0x18); run_cpu(2); // CLC - 2 cycles
+
+    // if branch is not taken, accumulator will be not be set to 0x01
+    load_instruction(0xB0, 0x02); // BCS relative - 2 cycles
+    load_accumulator(0x01); run_cpu(2); // run both cycles
+    EXPECT_EQ(0x01, store_accumulator());
+
+    load_instruction(0x38); run_cpu(2); // SEC - 2 cycles
+
+    // if branch is taken, accumulator will not be set to 0x02
+    load_instruction(0xB0, 0x01); // BCS relative - 3 cycles (taken)
+    load_instruction(0xEA); // NOP - 2 cycles
+    load_accumulator(0x02); run_cpu(3); // run both cycles
+    EXPECT_EQ(0x02, store_accumulator());
 }
 
 TEST_F(InstructionTests, beq)
 {
+    load_accumulator(0x01); // unset zero flag
+
+    load_instruction(0xF0, 0x02); // BEQ relative - 2 cycles
+    load_accumulator(0x01); run_cpu(2); // run both cycles
+    EXPECT_EQ(0x01, store_accumulator());
+
+    load_accumulator(0x00); // set zero flag
+
+    load_instruction(0xF0, 0x01); // BEQ relative - 3 cycles (taken)
+    load_instruction(0xEA); // NOP - 2 cycles
+    load_accumulator(0x02); run_cpu(3); // run both cycles
+    EXPECT_EQ(0x02, store_accumulator());
 }
 
 TEST_F(InstructionTests, bit)
@@ -369,27 +413,113 @@ TEST_F(InstructionTests, bit)
 
 TEST_F(InstructionTests, bmi)
 {
+    load_accumulator(0x00); // unset negative flag
+
+    load_instruction(0x30, 0x02); // BMI relative - 2 cycles
+    load_accumulator(0x01); run_cpu(2); // run both cycles
+    EXPECT_EQ(0x01, store_accumulator());
+
+    load_accumulator(0x80); // set negative flag
+
+    load_instruction(0x30, 0x01); // BMI relative - 3 cycles (taken)
+    load_instruction(0xEA); // NOP - 2 cycles
+    load_accumulator(0x02); run_cpu(3); // run both cycles
+    EXPECT_EQ(0x02, store_accumulator());
 }
 
 TEST_F(InstructionTests, bne)
 {
+    load_accumulator(0x00); // set zero flag
+
+    load_instruction(0xD0, 0x02); // BNE relative - 2 cycles
+    load_accumulator(0x01); run_cpu(2); // run both cycles
+    EXPECT_EQ(0x01, store_accumulator());
+
+    load_accumulator(0x01); // unset zero flag
+
+    load_instruction(0xD0, 0x01); // BNE relative - 3 cycles (taken)
+    load_instruction(0xEA); // NOP - 2 cycles
+    load_accumulator(0x02); run_cpu(3); // run both cycles
+    EXPECT_EQ(0x02, store_accumulator());
 }
 
 TEST_F(InstructionTests, bpl)
 {
+    load_accumulator(0x80); // set negative flag
+
+    load_instruction(0x10, 0x02); // BPL relative - 2 cycles
+    load_accumulator(0x01); run_cpu(2); // run both cycles
+    EXPECT_EQ(0x01, store_accumulator());
+
+    load_accumulator(0x00); // unset negative flag
+
+    load_instruction(0x10, 0x01); // BPL relative - 3 cycles (taken)
+    load_instruction(0xEA); // NOP - 2 cycles
+    load_accumulator(0x02); run_cpu(3); // run both cycles
+    EXPECT_EQ(0x02, store_accumulator());
 }
 
-// TODO: implement break instruction
 TEST_F(InstructionTests, brk)
 {
+    load_accumulator(0xF0); // set negative flag
+    load_instruction(0x58); run_cpu(2); // clear no interrupts flag
+
+    bus->write(IRQ_VECTOR, 0x00); // next instruction location low (0x1000)
+    bus->write(IRQ_VECTOR + 1, 0x10); // next instruction location high (0x1000)
+
+    bus->write(0x1000, 0xA9); // LDA immediate
+    bus->write(0x1001, 0x10);
+
+    const uint8_t pc_saved = local_pc + 2; // 2 bytes from brk and 
+    load_instruction(0x00); run_cpu(7); // BRK - 7 cycles
+    run_cpu(2); // LDA immediate - 2 cycles
+
+    local_pc = 0x1002; local_sp -= 3;
+    EXPECT_EQ(0x10, store_accumulator()); // LDA immediate
+    EXPECT_EQ(pc_saved, bus->read(STACK_BASE + local_sp + 2)); // PC low
+
+    // check saved flags
+    EXPECT_TRUE(bus->read(STACK_BASE + local_sp + 1) & status_flag::b);
+    EXPECT_FALSE(bus->read(STACK_BASE + local_sp + 1) & status_flag::zero);
+    EXPECT_TRUE(bus->read(STACK_BASE + local_sp + 1) & status_flag::negative);
+    EXPECT_FALSE(bus->read(STACK_BASE + local_sp + 1) & status_flag::no_interrupts);
+
+    EXPECT_TRUE(check_flag(no_interrupts)); // check current flags
 }
 
 TEST_F(InstructionTests, bvc)
 {
+    // trigger overflow
+    load_accumulator(0xFF);
+    load_instruction(0x69, 0x01); run_cpu(2); // ADC immediate - 2 cycles
+
+    load_instruction(0x50, 0x02); // BVC relative - 2 cycles
+    load_accumulator(0x01); run_cpu(2); // run both cycles
+    EXPECT_EQ(0x01, store_accumulator());
+
+    // after loading 0x01, overflow flag is cleared
+    load_instruction(0x50, 0x01); // BVC relative - 3 cycles (taken)
+    load_instruction(0xEA); // NOP - 2 cycles
+    load_accumulator(0x02); run_cpu(3); // run both cycles
+    EXPECT_EQ(0x02, store_accumulator());
 }
 
 TEST_F(InstructionTests, bvs)
 {
+    load_accumulator(0x00); // unset overflow flag
+
+    load_instruction(0x70, 0x02); // BVS relative - 2 cycles
+    load_accumulator(0x01); run_cpu(2); // run both cycles
+    EXPECT_EQ(0x01, store_accumulator());
+
+    // trigger overflow
+    load_accumulator(0xFF);
+    load_instruction(0x69, 0x01); run_cpu(2); // ADC immediate - 2 cycles
+
+    load_instruction(0x70, 0x01); // BVS relative - 3 cycles (taken)
+    load_instruction(0xEA); // NOP - 2 cycles
+    load_accumulator(0x02); run_cpu(3); // run both cycles
+    EXPECT_EQ(0x02, store_accumulator());
 }
 
 TEST_F(InstructionTests, clv)
@@ -622,13 +752,33 @@ TEST_F(InstructionTests, iny)
     EXPECT_FALSE(check_flag(negative));
 }
 
-// TODO: implement jump instructions
 TEST_F(InstructionTests, jmp)
 {
+    uint16_t jump_address = 0x01FF;
+
+    load_instruction(0x4C, jump_address & 0x00FF, jump_address >> 8); // JMP absolute
+    local_pc = jump_address;
+    load_instruction(0xA2, 0x12); // LDX immediate
+    run_cpu(5); // JMP - 3 cycles, LDX - 2 cycles
+
+    ASSERT_EQ(0x12, store_x());
 }
 
 TEST_F(InstructionTests, jsr)
 {
+    uint16_t jump_address = 0x12FF;
+    uint16_t local_pc_temp = local_pc + 2; // location that will be pushed to stack
+
+    load_instruction(0x20, jump_address & 0x00FF, jump_address >> 8); // JSR absolute
+    local_pc = jump_address;
+    load_instruction(0xA2, 0x12); // LDX immediate
+    run_cpu(6); // JSR - 6 cycles, LDX - 2 cycles
+
+    local_sp -= 2;
+
+    ASSERT_EQ(0x12, store_x());
+    ASSERT_EQ(local_pc_temp & 0x00FF, bus->read(STACK_BASE + local_sp + 1)); // return address low
+    ASSERT_EQ(local_pc_temp >> 8, bus->read(STACK_BASE + local_sp + 2)); // return address high
 }
 
 TEST_F(InstructionTests, lsr)
@@ -784,13 +934,57 @@ TEST_F(InstructionTests, ror)
     EXPECT_FALSE(check_flag(carry));
 }
 
-// TODO: implement returns later
 TEST_F(InstructionTests, rti)
 {
+    bus->write(IRQ_VECTOR, 0xFF);
+    bus->write(IRQ_VECTOR + 1, 0x01);
+    load_accumulator(0xF0); // set negative flag
+    ASSERT_TRUE(check_flag(negative));
+
+    load_instruction(0x00); // BRK - 7 cycles
+    uint16_t local_pc_temp = local_pc + 1;
+    local_pc += 4; // 1 will be used by break, 2 will be used by set_accumulator(), 1 by check_flag
+    load_instruction(0xA2, 0x01); // LDX immediate
+
+    run_cpu(7); // run BRK
+
+    local_pc = 0x01FF; // set PC to the end of the instruction
+    load_instruction(0xA2, 0x02); run_cpu(2); // LDX immediate
+    ASSERT_FALSE(check_flag(negative));
+    load_instruction(0x68); run_cpu(4); local_sp--; // PLA - 4 cycles, pop check_flag from stack
+    load_instruction(0x40); run_cpu(6); // RTI - 6 cycles
+
+    local_pc = local_pc_temp; // restore PC
+    EXPECT_EQ(0x02, store_x()); // check accumulator
+    EXPECT_TRUE(check_flag(negative)); // check negative flag
+
+    run_cpu(2); // run LDA immediate
+
+    local_pc += 2; // used by LDA
+    EXPECT_EQ(0x01, store_x()); // check accumulator
 }
 
 TEST_F(InstructionTests, rts)
 {
+    load_instruction(0x20, 0xFF, 0x01);
+    uint16_t local_pc_temp = local_pc;
+    local_pc += 2; // will be used by set_accumulator()
+    load_instruction(0xA9, 0x01); // LDA immediate
+
+    run_cpu(6); // run JSR
+
+    local_pc = 0x01FF; // set PC to the end of the instruction
+    load_instruction(0xA9, 0x02); run_cpu(2); // LDA immediate
+    load_instruction(0x60); run_cpu(6); // RTS - 6 cycles
+
+    // Make sure accumulator got set after jump
+    local_pc = local_pc_temp; // restore PC
+    EXPECT_EQ(0x02, store_accumulator()); // check accumulator
+
+    run_cpu(2); // run LDA immediate
+    local_pc += 2; // used by LDA
+
+    EXPECT_EQ(0x01, store_accumulator()); // check accumulator
 }
 
 TEST_F(InstructionTests, sbc)
