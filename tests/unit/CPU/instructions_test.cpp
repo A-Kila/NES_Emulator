@@ -1153,5 +1153,91 @@ TEST_F(InstructionTests, tya)
     EXPECT_FALSE(check_flag(zero));
     EXPECT_TRUE(check_flag(negative));
 }
+TEST_F(InstructionTests, interrupt)
+{
+    load_instruction(0x58); run_cpu(2); // clear no interrupts flag
+    load_accumulator(0xF0); // set negative flag
+
+    bus->write(IRQ_VECTOR, 0x00); // next instruction location low (0x1000)
+    bus->write(IRQ_VECTOR + 1, 0x10); // next instruction location high (0x1000)
+
+    bus->write(0x1000, 0xA9); // LDA immediate
+    bus->write(0x1001, 0x10);
+
+    const uint8_t pc_saved = local_pc; // 2 bytes from interrupt 
+    cpu->interrupt(); run_cpu(7); // trigger IRQ interrupt    
+    run_cpu(2); // LDA immediate - 2 cycles
+
+    local_pc = 0x1002; local_sp -= 3;
+    EXPECT_EQ(0x10, store_accumulator()); // LDA immediate
+    EXPECT_EQ(pc_saved, bus->read(STACK_BASE + local_sp + 2)); // PC low
+
+    // check saved flags
+    EXPECT_FALSE(bus->read(STACK_BASE + local_sp + 1) & status_flag::b);
+    EXPECT_FALSE(bus->read(STACK_BASE + local_sp + 1) & status_flag::zero);
+    EXPECT_TRUE(bus->read(STACK_BASE + local_sp + 1) & status_flag::negative);
+    EXPECT_FALSE(bus->read(STACK_BASE + local_sp + 1) & status_flag::no_interrupts);
+
+    EXPECT_TRUE(check_flag(no_interrupts)); // check current flags
+
+    load_instruction(0x78); run_cpu(2); // set no iterrupts flag
+
+    cpu->interrupt(); run_cpu(7); // trigger another interrupt (should not work, will call brk (0x00))
+
+    load_instruction(0x28); run_cpu(4); // PLP - 4 cycles
+    EXPECT_TRUE(check_flag(b)); // b flag gets set by brk
+}
+
+TEST_F(InstructionTests, non_maskable_interrupt)
+{
+    load_instruction(0x58); run_cpu(2); // clear no interrupts flag
+    load_accumulator(0xF0); // set negative flag
+
+    bus->write(NMI_VECTOR, 0x00); // next instruction location low (0x1000)
+    bus->write(NMI_VECTOR + 1, 0x10); // next instruction location high (0x1000)
+
+    bus->write(0x1000, 0xA9); // LDA immediate
+    bus->write(0x1001, 0x10);
+
+    const uint8_t pc_saved = local_pc; // 2 bytes from interrupt 
+    cpu->nonmaskable_interrupt(); run_cpu(7); // trigger NMI interrupt    
+    run_cpu(2); // LDA immediate - 2 cycles
+
+    local_pc = 0x1002; local_sp -= 3;
+    EXPECT_EQ(0x10, store_accumulator()); // LDA immediate
+    EXPECT_EQ(pc_saved, bus->read(STACK_BASE + local_sp + 2)); // PC low
+
+    // check saved flags
+    EXPECT_FALSE(bus->read(STACK_BASE + local_sp + 1) & status_flag::b);
+    EXPECT_FALSE(bus->read(STACK_BASE + local_sp + 1) & status_flag::zero);
+    EXPECT_TRUE(bus->read(STACK_BASE + local_sp + 1) & status_flag::negative);
+    EXPECT_FALSE(bus->read(STACK_BASE + local_sp + 1) & status_flag::no_interrupts);
+
+    EXPECT_TRUE(check_flag(no_interrupts)); // check current flags
+
+    load_instruction(0x78); run_cpu(2); // set no iterrupts flag
+
+    cpu->interrupt(); // trigger another interrupt (This should still work)
+
+    load_instruction(0x28); run_cpu(4); // PLP - 4 cycles
+    EXPECT_FALSE(check_flag(b)); // b flag gets set by brk
+}
+
+TEST_F(InstructionTests, reset)
+{
+    load_accumulator(0x01);
+    load_x(0x01);
+    load_y(0x01);
+
+    // set some flag like decimal
+    load_instruction(0xF8); run_cpu(2); // SED - 2 cycles
+
+    cpu->reset(); // reset CPU
+
+    EXPECT_EQ(0x00, store_accumulator()); // accumulator should be reset to 0
+    EXPECT_EQ(0x00, store_x()); // x should be reset to 0
+    EXPECT_EQ(0x00, store_y()); // y should be reset to 0
+    EXPECT_FALSE(check_flag(decimal)); // zero flag should be set
+}
 
 } // namespace NES_test
