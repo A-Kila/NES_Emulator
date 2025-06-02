@@ -14,165 +14,166 @@ cpu_t::cpu_t(bus_ref_t bus) :
     cycles_()
 {
     instruction_t instructions[] = {
+        // * Before instruction name means illegal opcode
         // 0x0*
         {"BRK", &cpu_t::brk, &cpu_t::immediate, 7},    {"ORA", &cpu_t::ora, &cpu_t::indexed_indirect_x, 6},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::zero_page_x, 8},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 3},     {"ORA", &cpu_t::ora, &cpu_t::zero_page, 3},
-        {"ASL", &cpu_t::asl, &cpu_t::zero_page, 5},    {"???", &cpu_t::xxx, &cpu_t::implicit, 5},
+        {"*JAM", &cpu_t::xxx, &cpu_t::implicit, 2},    {"*SLO", &cpu_t::_slo, &cpu_t::indexed_indirect_x, 8},
+        {"*NOP", &cpu_t::nop, &cpu_t::zero_page, 3},   {"ORA", &cpu_t::ora, &cpu_t::zero_page, 3},
+        {"ASL", &cpu_t::asl, &cpu_t::zero_page, 5},    {"*SLO", &cpu_t::_slo, &cpu_t::zero_page, 5},
         {"PHP", &cpu_t::php, &cpu_t::implicit, 3},     {"ORA", &cpu_t::ora, &cpu_t::immediate, 2},
-        {"ASL", &cpu_t::asl, &cpu_t::accumulator, 2},  {"???", &cpu_t::xxx, &cpu_t::implicit, 2},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"ORA", &cpu_t::ora, &cpu_t::absolute, 4},
-        {"ASL", &cpu_t::asl, &cpu_t::absolute, 6},     {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"ASL", &cpu_t::asl, &cpu_t::accumulator, 2},  {"*ANC", &cpu_t::_slo, &cpu_t::immediate, 2},
+        {"*NOP", &cpu_t::nop, &cpu_t::absolute, 4},    {"ORA", &cpu_t::ora, &cpu_t::absolute, 4},
+        {"ASL", &cpu_t::asl, &cpu_t::absolute, 6},     {"*SLO", &cpu_t::_slo, &cpu_t::absolute, 6},
 
         // 0x1*
         {"BPL", &cpu_t::bpl, &cpu_t::relative, 2},     {"ORA", &cpu_t::ora, &cpu_t::indirect_indexed_y, 5},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 8},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"ORA", &cpu_t::ora, &cpu_t::zero_page_x, 4},
-        {"ASL", &cpu_t::asl, &cpu_t::zero_page_x, 6},  {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"*JAM", &cpu_t::xxx, &cpu_t::implicit, 2},    {"*SLO", &cpu_t::_slo, &cpu_t::indirect_indexed_y, 8},
+        {"*NOP", &cpu_t::nop, &cpu_t::zero_page_x, 4}, {"ORA", &cpu_t::ora, &cpu_t::zero_page_x, 4},
+        {"ASL", &cpu_t::asl, &cpu_t::zero_page_x, 6},  {"*SLO", &cpu_t::_slo, &cpu_t::zero_page_x, 6},
         {"CLC", &cpu_t::clc, &cpu_t::implicit, 2},     {"ORA", &cpu_t::ora, &cpu_t::absolute_y, 4},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 7},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"ORA", &cpu_t::ora, &cpu_t::absolute_x, 4},
-        {"ASL", &cpu_t::asl, &cpu_t::absolute_x, 7},   {"???", &cpu_t::xxx, &cpu_t::implicit, 7},
+        {"*NOP", &cpu_t::nop, &cpu_t::implicit, 2},    {"*SLO", &cpu_t::_slo, &cpu_t::absolute_y, 7},
+        {"*NOP", &cpu_t::nop, &cpu_t::absolute_x, 4},  {"ORA", &cpu_t::ora, &cpu_t::absolute_x, 4},
+        {"ASL", &cpu_t::asl, &cpu_t::absolute_x, 7},   {"*SLO", &cpu_t::_slo, &cpu_t::absolute_x, 7},
 
         // 0x2*
         {"JSR", &cpu_t::jsr, &cpu_t::absolute, 6},     {"AND", &cpu_t::and_, &cpu_t::indexed_indirect_x, 6},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 8},
+        {"*JAM", &cpu_t::xxx, &cpu_t::implicit, 2},    {"*RLA", &cpu_t::_rla, &cpu_t::indexed_indirect_x, 8},
         {"BIT", &cpu_t::bit, &cpu_t::zero_page, 3},    {"AND", &cpu_t::and_, &cpu_t::zero_page, 3},
-        {"ROL", &cpu_t::rol, &cpu_t::zero_page, 5},    {"???", &cpu_t::xxx, &cpu_t::implicit, 5},
+        {"ROL", &cpu_t::rol, &cpu_t::zero_page, 5},    {"*RLA", &cpu_t::_rla, &cpu_t::zero_page, 5},
         {"PLP", &cpu_t::plp, &cpu_t::implicit, 4},     {"AND", &cpu_t::and_, &cpu_t::immediate, 2},
-        {"ROL", &cpu_t::rol, &cpu_t::accumulator, 2},  {"???", &cpu_t::xxx, &cpu_t::implicit, 2},
+        {"ROL", &cpu_t::rol, &cpu_t::accumulator, 2},  {"*ANC", &cpu_t::xxx, &cpu_t::immediate, 2},
         {"BIT", &cpu_t::bit, &cpu_t::absolute, 4},     {"AND", &cpu_t::and_, &cpu_t::absolute, 4},
-        {"ROL", &cpu_t::rol, &cpu_t::absolute, 6},     {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"ROL", &cpu_t::rol, &cpu_t::absolute, 6},     {"*RLA", &cpu_t::_rla, &cpu_t::absolute, 6},
 
         // 0x3*
         {"BMI", &cpu_t::bmi, &cpu_t::relative, 2},     {"AND", &cpu_t::and_, &cpu_t::indirect_indexed_y, 5},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 8},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"AND", &cpu_t::and_, &cpu_t::zero_page_x, 4},
-        {"ROL", &cpu_t::rol, &cpu_t::zero_page_x, 6},  {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"*JAM", &cpu_t::xxx, &cpu_t::implicit, 2},    {"*RLA", &cpu_t::_rla, &cpu_t::indirect_indexed_y, 8},
+        {"*NOP", &cpu_t::nop, &cpu_t::zero_page_x, 4}, {"AND", &cpu_t::and_, &cpu_t::zero_page_x, 4},
+        {"ROL", &cpu_t::rol, &cpu_t::zero_page_x, 6},  {"*RLA", &cpu_t::_rla, &cpu_t::zero_page_x, 6},
         {"SEC", &cpu_t::sec, &cpu_t::implicit, 2},     {"AND", &cpu_t::and_, &cpu_t::absolute_y, 4},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 7},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"AND", &cpu_t::and_, &cpu_t::absolute_x, 4},
-        {"ROL", &cpu_t::rol, &cpu_t::absolute_x, 7},   {"???", &cpu_t::xxx, &cpu_t::implicit, 7},
+        {"*NOP", &cpu_t::nop, &cpu_t::implicit, 2},    {"*RLA", &cpu_t::_rla, &cpu_t::absolute_y, 7},
+        {"*NOP", &cpu_t::nop, &cpu_t::absolute_x, 4},  {"AND", &cpu_t::and_, &cpu_t::absolute_x, 4},
+        {"ROL", &cpu_t::rol, &cpu_t::absolute_x, 7},   {"*RLA", &cpu_t::_rla, &cpu_t::absolute_x, 7},
 
         // 0x4*
         {"RTI", &cpu_t::rti, &cpu_t::implicit, 6},     {"EOR", &cpu_t::eor, &cpu_t::indexed_indirect_x, 6},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::zero_page_x, 8},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 3},     {"EOR", &cpu_t::eor, &cpu_t::zero_page, 3},
-        {"LSR", &cpu_t::lsr, &cpu_t::zero_page, 5},    {"???", &cpu_t::xxx, &cpu_t::implicit, 5},
+        {"*JAM", &cpu_t::xxx, &cpu_t::implicit, 2},    {"*SRE", &cpu_t::_sre, &cpu_t::indexed_indirect_x, 8},
+        {"*NOP", &cpu_t::nop, &cpu_t::zero_page, 3},   {"EOR", &cpu_t::eor, &cpu_t::zero_page, 3},
+        {"LSR", &cpu_t::lsr, &cpu_t::zero_page, 5},    {"*SRE", &cpu_t::_sre, &cpu_t::zero_page, 5},
         {"PHA", &cpu_t::pha, &cpu_t::implicit, 3},     {"EOR", &cpu_t::eor, &cpu_t::immediate, 2},
-        {"LSR", &cpu_t::lsr, &cpu_t::accumulator, 2},  {"???", &cpu_t::xxx, &cpu_t::implicit, 2},
+        {"LSR", &cpu_t::lsr, &cpu_t::accumulator, 2},  {"*ALR", &cpu_t::xxx, &cpu_t::immediate, 2},
         {"JMP", &cpu_t::jmp, &cpu_t::absolute, 3},     {"EOR", &cpu_t::eor, &cpu_t::absolute, 4},
-        {"LSR", &cpu_t::lsr, &cpu_t::absolute, 6},     {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"LSR", &cpu_t::lsr, &cpu_t::absolute, 6},     {"*SRE", &cpu_t::_sre, &cpu_t::absolute, 6},
 
         // 0x5*
         {"BVC", &cpu_t::bvc, &cpu_t::relative, 2},     {"EOR", &cpu_t::eor, &cpu_t::indirect_indexed_y, 5},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 8},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"EOR", &cpu_t::eor, &cpu_t::zero_page_x, 4},
-        {"LSR", &cpu_t::lsr, &cpu_t::zero_page_x, 6},  {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"*JAM", &cpu_t::xxx, &cpu_t::implicit, 2},    {"*SRE", &cpu_t::_sre, &cpu_t::indirect_indexed_y, 8},
+        {"*NOP", &cpu_t::nop, &cpu_t::zero_page_x, 4}, {"EOR", &cpu_t::eor, &cpu_t::zero_page_x, 4},
+        {"LSR", &cpu_t::lsr, &cpu_t::zero_page_x, 6},  {"*SRE", &cpu_t::_sre, &cpu_t::zero_page_x, 6},
         {"CLI", &cpu_t::cli, &cpu_t::implicit, 2},     {"EOR", &cpu_t::eor, &cpu_t::absolute_y, 4},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 7},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"EOR", &cpu_t::eor, &cpu_t::absolute_x, 4},
-        {"LSR", &cpu_t::lsr, &cpu_t::absolute_x, 7},   {"???", &cpu_t::xxx, &cpu_t::implicit, 7},
+        {"*NOP", &cpu_t::nop, &cpu_t::implicit, 2},    {"*SRE", &cpu_t::_sre, &cpu_t::absolute_y, 7},
+        {"*NOP", &cpu_t::nop, &cpu_t::absolute_x, 4},  {"EOR", &cpu_t::eor, &cpu_t::absolute_x, 4},
+        {"LSR", &cpu_t::lsr, &cpu_t::absolute_x, 7},   {"*SRE", &cpu_t::_sre, &cpu_t::absolute_x, 7},
 
         // 0x6*
         {"RTS", &cpu_t::rts, &cpu_t::implicit, 6},     {"ADC", &cpu_t::adc, &cpu_t::indexed_indirect_x, 6},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::zero_page_x, 8},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 3},     {"ADC", &cpu_t::adc, &cpu_t::zero_page, 3},
-        {"ROR", &cpu_t::ror, &cpu_t::zero_page, 5},    {"???", &cpu_t::xxx, &cpu_t::implicit, 5},
+        {"*JAM", &cpu_t::xxx, &cpu_t::implicit, 2},    {"*RRA", &cpu_t::_rra, &cpu_t::indexed_indirect_x, 8},
+        {"*NOP", &cpu_t::nop, &cpu_t::zero_page, 3},   {"ADC", &cpu_t::adc, &cpu_t::zero_page, 3},
+        {"ROR", &cpu_t::ror, &cpu_t::zero_page, 5},    {"*RRA", &cpu_t::_rra, &cpu_t::zero_page, 5},
         {"PLA", &cpu_t::pla, &cpu_t::implicit, 4},     {"ADC", &cpu_t::adc, &cpu_t::immediate, 2},
-        {"ROR", &cpu_t::ror, &cpu_t::accumulator, 2},  {"???", &cpu_t::xxx, &cpu_t::implicit, 2},
+        {"ROR", &cpu_t::ror, &cpu_t::accumulator, 2},  {"*ARR", &cpu_t::xxx, &cpu_t::immediate, 2},
         {"JMP", &cpu_t::jmp, &cpu_t::indirect, 5},     {"ADC", &cpu_t::adc, &cpu_t::absolute, 4},
-        {"ROR", &cpu_t::ror, &cpu_t::absolute, 6},     {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"ROR", &cpu_t::ror, &cpu_t::absolute, 6},     {"*RRA", &cpu_t::_rra, &cpu_t::absolute, 6},
 
         // 0x7*
         {"BVS", &cpu_t::bvs, &cpu_t::relative, 2},     {"ADC", &cpu_t::adc, &cpu_t::indirect_indexed_y, 5},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 8},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"ADC", &cpu_t::adc, &cpu_t::zero_page_x, 4},
-        {"ROR", &cpu_t::ror, &cpu_t::zero_page_x, 6},  {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"*JAM", &cpu_t::xxx, &cpu_t::implicit, 2},    {"*RRA", &cpu_t::_rra, &cpu_t::indirect_indexed_y, 8},
+        {"*NOP", &cpu_t::nop, &cpu_t::zero_page_x, 4}, {"ADC", &cpu_t::adc, &cpu_t::zero_page_x, 4},
+        {"ROR", &cpu_t::ror, &cpu_t::zero_page_x, 6},  {"*RRA", &cpu_t::_rra, &cpu_t::zero_page_x, 6},
         {"SEI", &cpu_t::sei, &cpu_t::implicit, 2},     {"ADC", &cpu_t::adc, &cpu_t::absolute_y, 4},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 7},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"ADC", &cpu_t::adc, &cpu_t::absolute_x, 4},
-        {"ROR", &cpu_t::ror, &cpu_t::absolute_x, 7},   {"???", &cpu_t::xxx, &cpu_t::implicit, 7},
+        {"*NOP", &cpu_t::nop, &cpu_t::implicit, 2},    {"*RRA", &cpu_t::_rra, &cpu_t::absolute_y, 7},
+        {"*NOP", &cpu_t::nop, &cpu_t::absolute_x, 4},  {"ADC", &cpu_t::adc, &cpu_t::absolute_x, 4},
+        {"ROR", &cpu_t::ror, &cpu_t::absolute_x, 7},   {"*RRA", &cpu_t::_rra, &cpu_t::absolute_x, 7},
 
         // 0x8*
-        {"???", &cpu_t::nop, &cpu_t::implicit, 2},     {"STA", &cpu_t::sta, &cpu_t::indexed_indirect_x, 6},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::zero_page_x, 6},
+        {"*NOP", &cpu_t::nop, &cpu_t::immediate, 2},   {"STA", &cpu_t::sta, &cpu_t::indexed_indirect_x, 6},
+        {"*NOP", &cpu_t::nop, &cpu_t::immediate, 2},   {"*SAX", &cpu_t::_sax, &cpu_t::indexed_indirect_x, 6},
         {"STY", &cpu_t::sty, &cpu_t::zero_page, 3},    {"STA", &cpu_t::sta, &cpu_t::zero_page, 3},
-        {"STX", &cpu_t::stx, &cpu_t::zero_page, 3},    {"???", &cpu_t::xxx, &cpu_t::implicit, 3},
-        {"DEY", &cpu_t::dey, &cpu_t::implicit, 2},     {"???", &cpu_t::nop, &cpu_t::implicit, 2},
-        {"TXA", &cpu_t::txa, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 2},
+        {"STX", &cpu_t::stx, &cpu_t::zero_page, 3},    {"*SAX", &cpu_t::_sax, &cpu_t::zero_page, 3},
+        {"DEY", &cpu_t::dey, &cpu_t::implicit, 2},     {"*NOP", &cpu_t::nop, &cpu_t::immediate, 2},
+        {"TXA", &cpu_t::txa, &cpu_t::implicit, 2},     {"*ANE", &cpu_t::xxx, &cpu_t::immediate, 2},
         {"STY", &cpu_t::sty, &cpu_t::absolute, 4},     {"STA", &cpu_t::sta, &cpu_t::absolute, 4},
-        {"STX", &cpu_t::stx, &cpu_t::absolute, 4},     {"???", &cpu_t::xxx, &cpu_t::implicit, 4},
+        {"STX", &cpu_t::stx, &cpu_t::absolute, 4},     {"*SAX", &cpu_t::_sax, &cpu_t::absolute, 4},
 
         // 0x9*
         {"BCC", &cpu_t::bcc, &cpu_t::relative, 2},     {"STA", &cpu_t::sta, &cpu_t::indirect_indexed_y, 6},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"*JAM", &cpu_t::xxx, &cpu_t::implicit, 2},    {"*SHA", &cpu_t::_sax, &cpu_t::indirect_indexed_y, 6},
         {"STY", &cpu_t::sty, &cpu_t::zero_page_x, 4},  {"STA", &cpu_t::sta, &cpu_t::zero_page_x, 4},
-        {"STX", &cpu_t::stx, &cpu_t::zero_page_y, 4},  {"???", &cpu_t::xxx, &cpu_t::implicit, 4},
+        {"STX", &cpu_t::stx, &cpu_t::zero_page_y, 4},  {"*SAX", &cpu_t::_sax, &cpu_t::zero_page_y, 4},
         {"TYA", &cpu_t::tya, &cpu_t::implicit, 2},     {"STA", &cpu_t::sta, &cpu_t::absolute_y, 5},
-        {"TXS", &cpu_t::txs, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 5},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 5},     {"STA", &cpu_t::sta, &cpu_t::absolute_x, 5},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 5},     {"???", &cpu_t::xxx, &cpu_t::implicit, 5},
+        {"TXS", &cpu_t::txs, &cpu_t::implicit, 2},     {"*TAS", &cpu_t::xxx, &cpu_t::absolute_y, 5},
+        {"*SHY", &cpu_t::xxx, &cpu_t::absolute_x, 5},  {"STA", &cpu_t::sta, &cpu_t::absolute_x, 5},
+        {"*SHX", &cpu_t::xxx, &cpu_t::absolute_y, 5},  {"*SHA", &cpu_t::xxx, &cpu_t::absolute_y, 5},
 
         // 0xA* 
         {"LDY", &cpu_t::ldy, &cpu_t::immediate, 2},    {"LDA", &cpu_t::lda, &cpu_t::indexed_indirect_x, 6},
-        {"LDX", &cpu_t::ldx, &cpu_t::immediate, 2},    {"???", &cpu_t::xxx, &cpu_t::zero_page_x, 6},
+        {"LDX", &cpu_t::ldx, &cpu_t::immediate, 2},    {"*LAX", &cpu_t::_lax, &cpu_t::indexed_indirect_x, 6},
         {"LDY", &cpu_t::ldy, &cpu_t::zero_page, 3},    {"LDA", &cpu_t::lda, &cpu_t::zero_page, 3},
-        {"LDX", &cpu_t::ldx, &cpu_t::zero_page, 3},    {"???", &cpu_t::xxx, &cpu_t::implicit, 3},
+        {"LDX", &cpu_t::ldx, &cpu_t::zero_page, 3},    {"*LAX", &cpu_t::_lax, &cpu_t::zero_page, 3},
         {"TAY", &cpu_t::tay, &cpu_t::implicit, 2},     {"LDA", &cpu_t::lda, &cpu_t::immediate, 2},
-        {"TAX", &cpu_t::tax, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 2},
+        {"TAX", &cpu_t::tax, &cpu_t::implicit, 2},     {"*LXA", &cpu_t::xxx, &cpu_t::immediate, 2},
         {"LDY", &cpu_t::ldy, &cpu_t::absolute, 4},     {"LDA", &cpu_t::lda, &cpu_t::absolute, 4},
-        {"LDX", &cpu_t::ldx, &cpu_t::absolute, 4},     {"???", &cpu_t::xxx, &cpu_t::implicit, 4},
+        {"LDX", &cpu_t::ldx, &cpu_t::absolute, 4},     {"*LAX", &cpu_t::_lax, &cpu_t::absolute, 4},
 
         // 0xB*
         {"BCS", &cpu_t::bcs, &cpu_t::relative, 2},     {"LDA", &cpu_t::lda, &cpu_t::indirect_indexed_y, 5},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 5},
+        {"*JAM", &cpu_t::xxx, &cpu_t::implicit, 2},    {"*LAX", &cpu_t::_lax, &cpu_t::indirect_indexed_y, 5},
         {"LDY", &cpu_t::ldy, &cpu_t::zero_page_x, 4},  {"LDA", &cpu_t::lda, &cpu_t::zero_page_x, 4},
-        {"LDX", &cpu_t::ldx, &cpu_t::zero_page_y, 4},  {"???", &cpu_t::xxx, &cpu_t::implicit, 4},
+        {"LDX", &cpu_t::ldx, &cpu_t::zero_page_y, 4},  {"*LAX", &cpu_t::_lax, &cpu_t::zero_page_y, 4},
         {"CLV", &cpu_t::clv, &cpu_t::implicit, 2},     {"LDA", &cpu_t::lda, &cpu_t::absolute_y, 4},
-        {"TSX", &cpu_t::tsx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 4},
+        {"TSX", &cpu_t::tsx, &cpu_t::implicit, 2},     {"*LAS", &cpu_t::xxx, &cpu_t::absolute_y, 4},
         {"LDY", &cpu_t::ldy, &cpu_t::absolute_x, 4},   {"LDA", &cpu_t::lda, &cpu_t::absolute_x, 4},
-        {"LDX", &cpu_t::ldx, &cpu_t::absolute_y, 4},   {"???", &cpu_t::xxx, &cpu_t::implicit, 4},
+        {"LDX", &cpu_t::ldx, &cpu_t::absolute_y, 4},   {"*LAX", &cpu_t::_lax, &cpu_t::absolute_y, 4},
 
         // 0xC*
         {"CPY", &cpu_t::cpy, &cpu_t::immediate, 2},    {"CMP", &cpu_t::cmp, &cpu_t::indexed_indirect_x, 6},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::zero_page_x, 8},
+        {"*NOP", &cpu_t::nop, &cpu_t::immediate, 2},   {"*DCP", &cpu_t::_dcp, &cpu_t::indexed_indirect_x, 8},
         {"CPY", &cpu_t::cpy, &cpu_t::zero_page, 3},    {"CMP", &cpu_t::cmp, &cpu_t::zero_page, 3},
-        {"DEC", &cpu_t::dec, &cpu_t::zero_page, 5},    {"???", &cpu_t::xxx, &cpu_t::implicit, 5},
+        {"DEC", &cpu_t::dec, &cpu_t::zero_page, 5},    {"*DCP", &cpu_t::_dcp, &cpu_t::zero_page, 5},
         {"INY", &cpu_t::iny, &cpu_t::implicit, 2},     {"CMP", &cpu_t::cmp, &cpu_t::immediate, 2},
-        {"DEX", &cpu_t::dex, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 2},
+        {"DEX", &cpu_t::dex, &cpu_t::implicit, 2},     {"*SBX", &cpu_t::xxx, &cpu_t::immediate, 2},
         {"CPY", &cpu_t::cpy, &cpu_t::absolute, 4},     {"CMP", &cpu_t::cmp, &cpu_t::absolute, 4},
-        {"DEC", &cpu_t::dec, &cpu_t::absolute, 6},     {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"DEC", &cpu_t::dec, &cpu_t::absolute, 6},     {"*DCP", &cpu_t::_dcp, &cpu_t::absolute, 6},
 
         // 0xD*
         {"BNE", &cpu_t::bne, &cpu_t::relative, 2},     {"CMP", &cpu_t::cmp, &cpu_t::indirect_indexed_y, 5},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 8},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"CMP", &cpu_t::cmp, &cpu_t::zero_page_x, 4},
-        {"DEC", &cpu_t::dec, &cpu_t::zero_page_x, 6},  {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"*JAM", &cpu_t::xxx, &cpu_t::implicit, 2},    {"*DCP", &cpu_t::_dcp, &cpu_t::indirect_indexed_y, 8},
+        {"*NOP", &cpu_t::nop, &cpu_t::zero_page_x, 4}, {"CMP", &cpu_t::cmp, &cpu_t::zero_page_x, 4},
+        {"DEC", &cpu_t::dec, &cpu_t::zero_page_x, 6},  {"*DCP", &cpu_t::_dcp, &cpu_t::zero_page_x, 6},
         {"CLD", &cpu_t::cld, &cpu_t::implicit, 2},     {"CMP", &cpu_t::cmp, &cpu_t::absolute_y, 4},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 7},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"CMP", &cpu_t::cmp, &cpu_t::absolute_x, 4},
-        {"DEC", &cpu_t::dec, &cpu_t::absolute_x, 7},   {"???", &cpu_t::xxx, &cpu_t::implicit, 7},
+        {"*NOP", &cpu_t::nop, &cpu_t::implicit, 2},    {"*DCP", &cpu_t::_dcp, &cpu_t::absolute_y, 7},
+        {"*NOP", &cpu_t::nop, &cpu_t::absolute_x, 4},  {"CMP", &cpu_t::cmp, &cpu_t::absolute_x, 4},
+        {"DEC", &cpu_t::dec, &cpu_t::absolute_x, 7},   {"*DCP", &cpu_t::_dcp, &cpu_t::absolute_x, 7},
 
         // 0xE*
         {"CPX", &cpu_t::cpx, &cpu_t::immediate, 2},    {"SBC", &cpu_t::sbc, &cpu_t::indexed_indirect_x, 6},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::zero_page_x, 8},
+        {"*NOP", &cpu_t::nop, &cpu_t::immediate, 2},   {"*ISB", &cpu_t::_isb, &cpu_t::indexed_indirect_x, 8},
         {"CPX", &cpu_t::cpx, &cpu_t::zero_page, 3},    {"SBC", &cpu_t::sbc, &cpu_t::zero_page, 3},
-        {"INC", &cpu_t::inc, &cpu_t::zero_page, 5},    {"???", &cpu_t::xxx, &cpu_t::implicit, 5},
+        {"INC", &cpu_t::inc, &cpu_t::zero_page, 5},    {"*ISB", &cpu_t::_isb, &cpu_t::zero_page, 5},
         {"INX", &cpu_t::inx, &cpu_t::implicit, 2},     {"SBC", &cpu_t::sbc, &cpu_t::immediate, 2},
-        {"NOP", &cpu_t::nop, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 2},
+        {"NOP", &cpu_t::nop, &cpu_t::implicit, 2},     {"*SBC", &cpu_t::sbc, &cpu_t::immediate, 2},
         {"CPX", &cpu_t::cpx, &cpu_t::absolute, 4},     {"SBC", &cpu_t::sbc, &cpu_t::absolute, 4},
-        {"INC", &cpu_t::inc, &cpu_t::absolute, 6},     {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"INC", &cpu_t::inc, &cpu_t::absolute, 6},     {"*ISB", &cpu_t::_isb, &cpu_t::absolute, 6},
 
         // 0xF*
         {"BEQ", &cpu_t::beq, &cpu_t::relative, 2},     {"SBC", &cpu_t::sbc, &cpu_t::indirect_indexed_y, 5},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 8},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"SBC", &cpu_t::sbc, &cpu_t::zero_page_x, 4},
-        {"INC", &cpu_t::inc, &cpu_t::zero_page_x, 6},  {"???", &cpu_t::xxx, &cpu_t::implicit, 6},
+        {"*JAM", &cpu_t::xxx, &cpu_t::implicit, 2},    {"*ISB", &cpu_t::_isb, &cpu_t::indirect_indexed_y, 8},
+        {"*NOP", &cpu_t::nop, &cpu_t::zero_page_x, 4}, {"SBC", &cpu_t::sbc, &cpu_t::zero_page_x, 4},
+        {"INC", &cpu_t::inc, &cpu_t::zero_page_x, 6},  {"*ISB", &cpu_t::_isb, &cpu_t::zero_page_x, 6},
         {"SED", &cpu_t::sed, &cpu_t::implicit, 2},     {"SBC", &cpu_t::sbc, &cpu_t::absolute_y, 4},
-        {"???", &cpu_t::xxx, &cpu_t::implicit, 2},     {"???", &cpu_t::xxx, &cpu_t::implicit, 7},
-        {"???", &cpu_t::nop, &cpu_t::implicit, 4},     {"SBC", &cpu_t::sbc, &cpu_t::absolute_x, 4},
-        {"INC", &cpu_t::inc, &cpu_t::absolute_x, 7},   {"???", &cpu_t::xxx, &cpu_t::implicit, 7}
+        {"*NOP", &cpu_t::nop, &cpu_t::implicit, 2},    {"*ISB", &cpu_t::_isb, &cpu_t::absolute_y, 7},
+        {"*NOP", &cpu_t::nop, &cpu_t::absolute_x, 4},  {"SBC", &cpu_t::sbc, &cpu_t::absolute_x, 4},
+        {"INC", &cpu_t::inc, &cpu_t::absolute_x, 7},   {"*ISB", &cpu_t::_isb, &cpu_t::absolute_x, 7}
     };
 
     instruction_lookup_.reserve(0x100);
@@ -347,7 +348,7 @@ bool cpu_t::adc(const uint16_t address)
 
     _set_flag(status_flag::carry, sum > 0xFF);
     _set_flag(status_flag::zero, (sum & 0xFF) == 0);
-    _set_flag(status_flag::overflow, ((registers_.a ^ sum) & (value ^ sum)) >> 7);
+    _set_flag(status_flag::overflow, (registers_.a ^ sum) & (value ^ sum) & 0x80);
     _set_flag(status_flag::negative, sum & (1 << 7));
 
     registers_.a = sum & 0xFF;
@@ -478,7 +479,7 @@ bool cpu_t::cmp(const uint16_t address)
 {
     const uint8_t result = registers_.a - bus_->read(address);
 
-    _set_flag(status_flag::carry, (int8_t)result >= 0);
+    _set_flag(status_flag::carry, registers_.a >= bus_->read(address));
     _set_flag(status_flag::zero, result == 0);
     _set_flag(status_flag::negative, result >> 7);
 
@@ -489,7 +490,7 @@ bool cpu_t::cpx(const uint16_t address)
 {
     const uint8_t result = registers_.x - bus_->read(address);
 
-    _set_flag(status_flag::carry, (int8_t)result >= 0);
+    _set_flag(status_flag::carry, registers_.x >= bus_->read(address));
     _set_flag(status_flag::zero, result == 0);
     _set_flag(status_flag::negative, result >> 7);
 
@@ -500,7 +501,7 @@ bool cpu_t::cpy(const uint16_t address)
 {
     const uint8_t result = registers_.y - bus_->read(address);
 
-    _set_flag(status_flag::carry, (int8_t)result >= 0);
+    _set_flag(status_flag::carry, registers_.y >= bus_->read(address));
     _set_flag(status_flag::zero, result == 0);
     _set_flag(status_flag::negative, result >> 7);
 
@@ -687,7 +688,8 @@ bool cpu_t::pla(const uint16_t address)
 
 bool cpu_t::plp(const uint16_t address)
 {
-    registers_.status = _pop_stack();
+    const uint8_t status_tmp = _pop_stack() & ~(status_flag::b | status_flag::unused);
+    registers_.status = status_tmp | (registers_.status & (status_flag::b | status_flag::unused));
 
     return false;
 }
@@ -730,7 +732,8 @@ bool cpu_t::ror(const uint16_t address)
 
 bool cpu_t::rti(const uint16_t address)
 {
-    registers_.status = _pop_stack();
+    const uint8_t status_tmp = _pop_stack() & ~(status_flag::b | status_flag::unused);
+    registers_.status = status_tmp | (registers_.status & (status_flag::b | status_flag::unused));
 
     registers_.pc = _pop_stack();
     registers_.pc |= _pop_stack() << 8;
@@ -846,9 +849,6 @@ bool cpu_t::txs(const uint16_t address)
 {
     registers_.sp = registers_.x;
 
-    _set_flag(status_flag::zero, registers_.sp == 0);
-    _set_flag(status_flag::negative, registers_.sp >> 7);
-
     return false;
 }
 
@@ -866,6 +866,63 @@ bool cpu_t::xxx(const uint16_t _)
 {
     return false;
 }
+
+// Illegal instructions --------------------------------
+bool cpu_t::_dcp(const uint16_t address)
+{
+    dec(address);
+    cmp(address);
+    return false;
+}
+
+bool cpu_t::_isb(const uint16_t address)
+{
+    inc(address);
+    sbc(address);
+    return false;
+}
+
+bool cpu_t::_lax(const uint16_t address)
+{
+    lda(address);
+    ldx(address);
+    return false;
+}
+
+bool cpu_t::_rla(const uint16_t address)
+{
+    rol(address);
+    and_(address);
+    return false;
+}
+
+bool cpu_t::_rra(const uint16_t address)
+{
+    ror(address);
+    adc(address);
+    return false;
+}
+
+bool cpu_t::_sax(const uint16_t address)
+{
+    bus_->write(address, registers_.a & registers_.x);
+    return false;
+}
+
+bool cpu_t::_slo(const uint16_t address)
+{
+    asl(address);
+    ora(address);
+    return false;
+}
+
+bool cpu_t::_sre(const uint16_t address)
+{
+    lsr(address);
+    eor(address);
+    return false;
+}
+
 
 // Helper functions --------------------------------
 bool cpu_t::_get_flag(const status_flag flag)
@@ -929,6 +986,149 @@ bool cpu_t::_relative_jump(const bool condition, const uint16_t address)
     registers_.pc += address;
 
     return true;
+}
+
+// Debugging --------------------------------------------
+// Formated according to nestest's debug format
+char *cpu_t::_log_debug()
+{
+    if (cycles_ != 0) return nullptr;
+
+    static char debug_info[78];
+    uint8_t offset = 0;
+
+    offset += snprintf(debug_info + offset, sizeof(debug_info) - offset, "%04X  ", registers_.pc);
+
+    const uint8_t opcode = bus_->read(registers_.pc);
+    const uint8_t operand_1 = bus_->read(registers_.pc + 1);
+    const uint8_t operand_2 = bus_->read(registers_.pc + 2);
+    const auto address_mode = instruction_lookup_[opcode].addr_mode;
+    const auto operation = instruction_lookup_[opcode].operation;
+    const auto name = instruction_lookup_[opcode].name;
+
+    uint8_t op_len = 0;
+    if (address_mode == &cpu_t::implicit || address_mode == &cpu_t::accumulator) op_len = 1;
+    else if (address_mode == &cpu_t::absolute || address_mode == &cpu_t::absolute_x ||
+        address_mode == &cpu_t::absolute_y || address_mode == &cpu_t::indirect)
+        op_len = 3;
+    else op_len = 2;
+
+    switch (op_len)
+    {
+    case 1:
+        offset += snprintf(debug_info + offset, sizeof(debug_info) - offset,
+            "%02X       ", opcode);
+        break;
+    case 2:
+        offset += snprintf(debug_info + offset, sizeof(debug_info) - offset,
+            "%02X %02X    ", opcode, operand_1);
+        break;
+    case 3:
+        offset += snprintf(debug_info + offset, sizeof(debug_info) - offset,
+            "%02X %02X %02X ", opcode, operand_1, operand_2);
+        break;
+    }
+
+    offset += snprintf(debug_info + offset, sizeof(debug_info) - offset, "%4s ", name);
+
+    switch (op_len)
+    {
+    case 1:
+        if (address_mode == &cpu_t::accumulator)
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset, "A ");
+        break;
+    case 2:
+        if (address_mode == &cpu_t::immediate)
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset, "#$%02X ", operand_1);
+        else if (address_mode == &cpu_t::zero_page)
+        {
+            const uint8_t value = bus_->read(operand_1);
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset, "$%02X = %02X", operand_1, value);
+        }
+        else if (address_mode == &cpu_t::zero_page_x)
+        {
+            const uint8_t zp = operand_1 + registers_.x;
+            const uint8_t value = bus_->read(zp);
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset,
+                "$%02X,X @ %02X = %02X", operand_1, zp, value);
+        }
+        else if (address_mode == &cpu_t::zero_page_y)
+        {
+            const uint8_t zp = operand_1 + registers_.y;
+            const uint8_t value = bus_->read(zp);
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset,
+                "$%02X,Y @ %02X = %02X", operand_1, zp, value);
+        }
+        else if (address_mode == &cpu_t::relative)
+        {
+            const uint8_t relative_short = operand_1;
+            const uint16_t relative_full = relative_short & 0x80 ? (0xFF00 | relative_short) : relative_short;
+            const uint16_t target = registers_.pc + relative_full + 2;
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset, "$%04X ", target);
+        }
+        else if (address_mode == &cpu_t::indexed_indirect_x)
+        {
+            const uint8_t addr = operand_1 + registers_.x;
+            const uint16_t indirect_addr = bus_->read(addr) + (bus_->read(uint8_t(addr + 1)) << 8);
+            const uint8_t value = bus_->read(indirect_addr);
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset,
+                "($%02X,X) @ %02X = %04X = %02X", operand_1, addr, indirect_addr, value);
+        }
+        else if (address_mode == &cpu_t::indirect_indexed_y)
+        {
+            const uint16_t addr = bus_->read(operand_1) + (bus_->read(uint8_t(operand_1 + 1)) << 8);
+            const uint16_t indirect_addr = addr + registers_.y;
+            const uint8_t value = bus_->read(indirect_addr);
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset,
+                "($%02X),Y = %04X @ %04X = %02X", operand_1, addr, indirect_addr, value);
+        }
+        break;
+    case 3:
+        if (address_mode == &cpu_t::indirect)
+        {
+            const uint16_t indirect_addr = (operand_2 << 8) + operand_1;
+            uint16_t addr = (bus_->read(indirect_addr + 1) << 8) + bus_->read(indirect_addr);
+            if (operand_1 == 0xFF) // Simulate the 6502 bug
+                addr = (bus_->read(indirect_addr & 0xFF00) << 8) + bus_->read(indirect_addr);
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset,
+                "($%04X) = %04X", indirect_addr, addr);
+        }
+        else if (operation == &cpu_t::jmp || operation == &cpu_t::jsr)
+        {
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset,
+                "$%02X%02X", operand_2, operand_1);
+        }
+        else if (address_mode == &cpu_t::absolute)
+        {
+            const uint16_t addr = (operand_2 << 8) + operand_1;
+            const uint8_t value = bus_->read(addr);
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset,
+                "$%04X = %02X", addr, value);
+        }
+        else if (address_mode == &cpu_t::absolute_x)
+        {
+            const uint16_t addr = (operand_2 << 8) + operand_1;
+            const uint16_t addr_indexed = addr + registers_.x;
+            const uint8_t value = bus_->read(addr_indexed);
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset,
+                "$%04X,X @ %04X = %02X", addr, addr_indexed, value);
+        }
+        else if (address_mode == &cpu_t::absolute_y)
+        {
+            const uint16_t addr = (operand_2 << 8) + operand_1;
+            const uint16_t addr_indexed = addr + registers_.y;
+            const uint8_t value = bus_->read(addr_indexed);
+            offset += snprintf(debug_info + offset, sizeof(debug_info) - offset,
+                "$%04X,Y @ %04X = %02X", addr, addr_indexed, value);
+        }
+        break;
+    }
+
+    snprintf(debug_info, sizeof(debug_info),
+        "%-47s A:%02X X:%02X Y:%02X P:%02X SP:%02X",
+        debug_info, registers_.a, registers_.x, registers_.y, registers_.status, registers_.sp);
+
+    return debug_info;
 }
 
 }

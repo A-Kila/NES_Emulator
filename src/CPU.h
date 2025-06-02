@@ -134,7 +134,17 @@ protected:
     bool txs(const uint16_t address);  // Transfer X to Stack Pointer, Type: Stack
     bool tya(const uint16_t address);  // Transfer Y to A, Type: Transfer
 
-    bool xxx(const uint16_t _); // Illegal opcode, Type: Other
+    bool xxx(const uint16_t _); // Illegal opcodes (not implemented), Type: Other
+
+    // Illegal opcodes (not all)
+    bool _dcp(const uint16_t address); // (DCM) Decrement + Compare, Type: Other
+    bool _isb(const uint16_t address); // (ISC, INS) Increment + Subtract with Carry, Type: Other
+    bool _lax(const uint16_t address); // Load A + Load X, Type: Other
+    bool _rla(const uint16_t address); // Rotate Left + AND, Type: Other
+    bool _rra(const uint16_t address); // Rotate Right + Add with Carry, Type: Other
+    bool _sax(const uint16_t address); // (AXS, AAX) Store A + X, Type: Other
+    bool _slo(const uint16_t address); // (ASO) Shift Left + OR, Type: Other
+    bool _sre(const uint16_t address); // (LSE) Logical Shift Right + Exclusive OR, Type: Other
 
 private:
     // Helper functions
@@ -150,6 +160,10 @@ private:
     bool _absolute_add(uint16_t &address, const uint8_t register_value);
 
     bool _relative_jump(const bool condition, const uint16_t address);
+
+public:
+    // Debugging
+    char *_log_debug();
 
 private:
     bus_ref_t bus_; // Pointer to the bus
