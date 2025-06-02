@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "cpu.h"
-#include "utils.h"
+#include "../../utils.h"
 
 #include <optional>
 

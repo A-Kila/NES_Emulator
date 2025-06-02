@@ -10,7 +10,8 @@ public:
     bus_stub_t() : size_(sizeof(ram))
     {
         for (int i = 0; i < size_; i++)
-            ram[i] = 0x00;
+            if (i >= 0x4000 && i < 0x4017) ram[i] = 0xFF; // APU
+            else ram[i] = 0x00;
     }
 
     void write(uint16_t addr, uint8_t data) override
@@ -25,6 +26,19 @@ public:
             return ram[addr];
 
         return 0x00;
+    }
+
+    bool load_cartige(const std::vector<uint8_t> &data, const uint16_t start_addr = 0x0000)
+    {
+        if (start_addr + data.size() > 0x10000)
+            return false;
+
+        for (uint32_t i = 0; i < data.size(); i++)
+        {
+            ram[i + start_addr] = data[i];
+        }
+
+        return true;
     }
 
 private:

@@ -1,7 +1,6 @@
-#include <_types/_uint8_t.h>
 #include <gtest/gtest.h>
 #include "cpu.h"
-#include "utils.h"
+#include "../../utils.h"
 
 namespace NES_test {
 
