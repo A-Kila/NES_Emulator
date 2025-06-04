@@ -263,8 +263,7 @@ TEST_F(InstructionTests, adc)
     // common practice is to clear carry before ADC
     load_instruction(0x18); run_cpu(2); // CLC - 2 cycles
 
-    const uint8_t add_value_1 = 0xFF; // triggers negative
-    const uint8_t add_value_2 = 0x01; // triggers carry, zero and overflow
+    const uint8_t add_value_1 = 0x80; // triggers negative
 
     load_instruction(0x69, add_value_1); run_cpu(2); // ADC immediate - 2 cycles
     EXPECT_EQ(add_value_1, store_accumulator());
@@ -273,8 +272,9 @@ TEST_F(InstructionTests, adc)
     EXPECT_FALSE(check_flag(carry));
     EXPECT_FALSE(check_flag(overflow));
 
-    load_instruction(0x69, add_value_2); run_cpu(2); // ADC immediate - 2 cycles
-    EXPECT_EQ(uint8_t(add_value_1 + add_value_2), store_accumulator());
+    // trigger overflow and zero by 0x80 + 0x80
+    load_instruction(0x69, add_value_1); run_cpu(2); // ADC immediate - 2 cycles
+    EXPECT_EQ(uint8_t(0), store_accumulator());
     EXPECT_TRUE(check_flag(zero));
     EXPECT_FALSE(check_flag(negative));
     EXPECT_TRUE(check_flag(carry));
@@ -282,7 +282,7 @@ TEST_F(InstructionTests, adc)
 
     // add with carry
     load_instruction(0x69, 0); run_cpu(2); // ADC immediate - 2 cycles
-    EXPECT_EQ(uint8_t(add_value_1 + add_value_2 + 1), store_accumulator());
+    EXPECT_EQ(1, store_accumulator());
     EXPECT_FALSE(check_flag(zero));
     EXPECT_FALSE(check_flag(negative));
     EXPECT_FALSE(check_flag(carry));
@@ -489,8 +489,8 @@ TEST_F(InstructionTests, brk)
 TEST_F(InstructionTests, bvc)
 {
     // trigger overflow
-    load_accumulator(0xFF);
-    load_instruction(0x69, 0x01); run_cpu(2); // ADC immediate - 2 cycles
+    load_accumulator(0x80);
+    load_instruction(0x69, 0x80); run_cpu(2); // ADC immediate - 2 cycles
 
     load_instruction(0x50, 0x02); // BVC relative - 2 cycles
     load_accumulator(0x01); run_cpu(2); // run both cycles
@@ -524,8 +524,8 @@ TEST_F(InstructionTests, bvs)
 TEST_F(InstructionTests, clv)
 {
     // trigger overflow
-    load_accumulator(0xFF);
-    load_instruction(0x69, 0x01); run_cpu(2); // ADC immediate - 2 cycles
+    load_accumulator(0x80);
+    load_instruction(0x69, 0x80); run_cpu(2); // ADC immediate - 2 cycles
 
     EXPECT_TRUE(check_flag(overflow));
 
