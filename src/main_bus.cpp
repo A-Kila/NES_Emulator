@@ -1,10 +1,12 @@
 #include "main_bus.h"
 #include "ram.h"
+#include <cassert>
 
 namespace NES {
 
-main_bus_t::main_bus_t() :
-    ram_()
+main_bus_t::main_bus_t(cartridge_ref_t cartridge) :
+    ram_(),
+    cartridge_(cartridge)
 {
 }
 
@@ -18,10 +20,7 @@ void main_bus_t::write(uint16_t addr, uint8_t data)
     else if (_in_addr_range(addr, PPU_ADDR_RANGE)); // TODO: Fill after PPU implementation
     else if (_in_addr_range(addr, APU_IO_ADDR_RANGE)); // TODO: Fill after APU/IO implementation
     else if (_in_addr_range(addr, CARTRIDGE_ADDR_RANGE)); // TODO: Fill after cartridge implementation
-    else
-    {
-        // TODO: Throw an error or assert
-    }
+    else assert(false && "Address out of range in main bus write operation");
 }
 
 uint8_t main_bus_t::read(uint16_t addr)
@@ -30,11 +29,8 @@ uint8_t main_bus_t::read(uint16_t addr)
     else if (_in_addr_range(addr, PPU_ADDR_RANGE)); // TODO: Fill after PPU implementation
     else if (_in_addr_range(addr, APU_IO_ADDR_RANGE)); // TODO: Fill after APU/IO implementation
     else if (_in_addr_range(addr, CARTRIDGE_ADDR_RANGE)); // TODO: Fill after cartridge implementation 
-    else
-    {
-        // TODO: Throw an error or assert
-    }
 
+    assert(false && "Address out of range in main bus read operation");
     return 0;
 }
 
