@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 #include <fstream>
 #include "cpu.h"
-#include "../../utils.h"
+#include "main_bus.h"
+#include "cartridge/cartridge.h"
+#include "../utils.h"
 
 #define STRING(x) #x
 #define XSTRING(x) STRING(x)
@@ -27,25 +29,15 @@ TEST(NestestSystemTest, TestCpuState)
     const char *ROM_FILE_PATH = XSTRING(RESOURCES_DIR) "/nestest.nes";
     const char *LOG_FILE_PATH = XSTRING(CURRENT_BINARY_DIR) "/my_nes.log";
 
-    auto bus = std::make_shared<bus_stub_t>();
+    auto cartridge = std::make_shared<NES::cartridge_t>(ROM_FILE_PATH);
+    ASSERT_TRUE(cartridge->is_valid()) << "Failed to load cartridge from file: " << ROM_FILE_PATH;
+
+    auto bus = std::make_shared<NES::main_bus_t>(cartridge);
     NES::cpu_t cpu(bus);
 
-    bus->write(0xFFFC, 0x00); // Reset vector low byte
-    bus->write(0xFFFD, 0xC0); // Reset vector high byte
-
+    bus->write(RESET_VECTOR, 0x00); // Set the reset vector to 0xC000
+    bus->write(RESET_VECTOR + 1, 0xC0); // Set the reset vector to 0xC000
     cpu.reset(); // Reset the CPU
-
-    std::ifstream cartrige_file(ROM_FILE_PATH, std::ios::in);
-    ASSERT_TRUE(cartrige_file.is_open()) << "Failed to open ROM file: " << ROM_FILE_PATH;
-
-    uint16_t program_size = get_program_size(cartrige_file);
-    std::vector<uint8_t> program_data(program_size);
-    cartrige_file.read(reinterpret_cast<char *>(program_data.data()), program_size);
-    ASSERT_EQ(program_size, cartrige_file.gcount()) << "Failed to read the entire ROM file";
-
-    cartrige_file.close();
-
-    ASSERT_TRUE(bus->load_cartige(program_data, 0xC000)) << "Failed to load ROM data into bus";
 
     std::ofstream log_file(LOG_FILE_PATH);
     ASSERT_TRUE(log_file.is_open()) << "Failed to open log file";
