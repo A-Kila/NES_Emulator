@@ -1,6 +1,6 @@
 #include <vector>
-#include "bus.h"
-#include "cpu.h"
+#include "nes/bus.h"
+#include "nes/cpu.h"
 
 namespace NES_test {
 

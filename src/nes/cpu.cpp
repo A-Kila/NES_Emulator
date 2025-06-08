@@ -240,6 +240,12 @@ bool cpu_t::immediate(uint16_t &address)
     return false;
 }
 
+void cpu_t::set_reset_vector(uint16_t address)
+{
+    bus_->write(RESET_VECTOR, address & 0x00FF);
+    bus_->write(RESET_VECTOR + 1, (address & 0xFF00) >> 8);
+}
+
 /* Instructions operate on the accumulator, no address, works like implicit */
 bool cpu_t::accumulator(uint16_t &address)
 {

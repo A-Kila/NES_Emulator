@@ -19,6 +19,9 @@ public:
     void interrupt();
     void nonmaskable_interrupt();
 
+    // Might be useful for testing
+    void set_reset_vector(uint16_t address);
+
 private:
     struct registers_t
     {

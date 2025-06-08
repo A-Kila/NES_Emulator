@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "cpu.h"
+#include "nes/cpu.h"
 #include "../../utils.h"
 
 namespace NES_test {

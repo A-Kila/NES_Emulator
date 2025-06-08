@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <fstream>
-#include "cpu.h"
-#include "main_bus.h"
-#include "cartridge/cartridge.h"
+#include "nes/cpu.h"
+#include "nes/main_bus.h"
+#include "nes/cartridge/cartridge.h"
 #include "../utils.h"
 
 #define STRING(x) #x
@@ -35,8 +35,7 @@ TEST(NestestSystemTest, TestCpuState)
     auto bus = std::make_shared<NES::main_bus_t>(cartridge);
     NES::cpu_t cpu(bus);
 
-    bus->write(RESET_VECTOR, 0x00); // Set the reset vector to 0xC000
-    bus->write(RESET_VECTOR + 1, 0xC0); // Set the reset vector to 0xC000
+    cpu.set_reset_vector(0xC000);
     cpu.reset(); // Reset the CPU
 
     std::ofstream log_file(LOG_FILE_PATH);
