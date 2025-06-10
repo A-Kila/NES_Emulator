@@ -25,16 +25,6 @@ public:
 private:
     struct registers_t
     {
-        registers_t() :
-            a(),
-            x(),
-            y(),
-            pc(),
-            sp(),
-            status()
-        {
-        }
-
         uint8_t a; // Accumulator
         uint8_t x;
         uint8_t y;
@@ -150,10 +140,6 @@ protected:
     bool _sre(const uint16_t address); // (LSE) Logical Shift Right + Exclusive OR, Type: Other
 
 private:
-    // Helper functions
-    bool _get_flag(status_flag flag);
-    void _set_flag(const status_flag flag, const bool value);
-
     void _push_stack(const uint8_t value);
     uint8_t _pop_stack();
 

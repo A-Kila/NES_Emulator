@@ -1,11 +1,11 @@
 #include "cpu.h"
 #include "bus.h"
+#include "utils.h"
 #include <_types/_uint16_t.h>
 #include <_types/_uint8_t.h>
 #include <vector>
 
 namespace NES {
-
 
 // TODO: maybe refactor in a map
 cpu_t::cpu_t(bus_ref_t bus) :
@@ -215,7 +215,7 @@ void cpu_t::reset()
 
 void cpu_t::interrupt()
 {
-    if (_get_flag(status_flag::no_interrupts)) return;
+    if (utils::get_flag(registers_.status, status_flag::no_interrupts)) return;
 
     _basic_interrupt(IRQ_VECTOR, 7);
 }
@@ -350,12 +350,12 @@ bool cpu_t::relative(uint16_t &address)
 bool cpu_t::adc(const uint16_t address)
 {
     const uint16_t value = bus_->read(address);
-    const uint16_t sum = registers_.a + value + _get_flag(status_flag::carry);
+    const uint16_t sum = registers_.a + value + utils::get_flag(registers_.status, status_flag::carry);
 
-    _set_flag(status_flag::carry, sum > 0xFF);
-    _set_flag(status_flag::zero, (sum & 0xFF) == 0);
-    _set_flag(status_flag::overflow, (registers_.a ^ sum) & (value ^ sum) & 0x80);
-    _set_flag(status_flag::negative, sum & (1 << 7));
+    utils::set_flag(registers_.status, status_flag::carry, sum > 0xFF);
+    utils::set_flag(registers_.status, status_flag::zero, (sum & 0xFF) == 0);
+    utils::set_flag(registers_.status, status_flag::overflow, (registers_.a ^ sum) & (value ^ sum) & 0x80);
+    utils::set_flag(registers_.status, status_flag::negative, sum & (1 << 7));
 
     registers_.a = sum & 0xFF;
     return true;
@@ -365,8 +365,8 @@ bool cpu_t::and_(const uint16_t address)
 {
     registers_.a &= bus_->read(address);
 
-    _set_flag(status_flag::zero, registers_.a == 0);
-    _set_flag(status_flag::negative, registers_.a >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.a == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.a >> 7);
 
     return true;
 }
@@ -375,12 +375,12 @@ bool cpu_t::asl(const uint16_t address)
 {
     uint8_t value = is_addressing_accumulator_ ? registers_.a : bus_->read(address);
 
-    _set_flag(status_flag::carry, value >> 7);
+    utils::set_flag(registers_.status, status_flag::carry, value >> 7);
 
     value <<= 1;
 
-    _set_flag(status_flag::zero, value == 0);
-    _set_flag(status_flag::negative, value >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, value == 0);
+    utils::set_flag(registers_.status, status_flag::negative, value >> 7);
 
     if (is_addressing_accumulator_) registers_.a = value;
     else bus_->write(address, value);
@@ -390,43 +390,43 @@ bool cpu_t::asl(const uint16_t address)
 
 bool cpu_t::bcc(const uint16_t address)
 {
-    return _relative_jump(!_get_flag(status_flag::carry), address);
+    return _relative_jump(!utils::get_flag(registers_.status, status_flag::carry), address);
 }
 
 bool cpu_t::bcs(const uint16_t address)
 {
-    return _relative_jump(_get_flag(status_flag::carry), address);
+    return _relative_jump(utils::get_flag(registers_.status, status_flag::carry), address);
 }
 
 bool cpu_t::beq(const uint16_t address)
 {
-    return _relative_jump(_get_flag(status_flag::zero), address);
+    return _relative_jump(utils::get_flag(registers_.status, status_flag::zero), address);
 }
 
 bool cpu_t::bit(const uint16_t address)
 {
     const uint8_t test_value = registers_.a & bus_->read(address);
 
-    _set_flag(status_flag::zero, test_value == 0);
-    _set_flag(status_flag::overflow, (bus_->read(address) >> 6) & 0x01);
-    _set_flag(status_flag::negative, (bus_->read(address) >> 7));
+    utils::set_flag(registers_.status, status_flag::zero, test_value == 0);
+    utils::set_flag(registers_.status, status_flag::overflow, (bus_->read(address) >> 6) & 0x01);
+    utils::set_flag(registers_.status, status_flag::negative, (bus_->read(address) >> 7));
 
     return false;
 }
 
 bool cpu_t::bmi(const uint16_t address)
 {
-    return _relative_jump(_get_flag(status_flag::negative), address);
+    return _relative_jump(utils::get_flag(registers_.status, status_flag::negative), address);
 }
 
 bool cpu_t::bne(const uint16_t address)
 {
-    return _relative_jump(!_get_flag(status_flag::zero), address);
+    return _relative_jump(!utils::get_flag(registers_.status, status_flag::zero), address);
 }
 
 bool cpu_t::bpl(const uint16_t address)
 {
-    return _relative_jump(!_get_flag(status_flag::negative), address);
+    return _relative_jump(!utils::get_flag(registers_.status, status_flag::negative), address);
 }
 
 bool cpu_t::brk(const uint16_t address)
@@ -436,7 +436,7 @@ bool cpu_t::brk(const uint16_t address)
 
     _push_stack(registers_.status | status_flag::b | status_flag::unused);
 
-    _set_flag(status_flag::no_interrupts, true);
+    utils::set_flag(registers_.status, status_flag::no_interrupts, true);
 
     registers_.pc = bus_->read(IRQ_VECTOR) + (bus_->read(IRQ_VECTOR + 1) << 8);
 
@@ -445,38 +445,38 @@ bool cpu_t::brk(const uint16_t address)
 
 bool cpu_t::bvc(const uint16_t address)
 {
-    return _relative_jump(!_get_flag(status_flag::overflow), address);
+    return _relative_jump(!utils::get_flag(registers_.status, status_flag::overflow), address);
 }
 
 bool cpu_t::bvs(const uint16_t address)
 {
-    return _relative_jump(_get_flag(status_flag::overflow), address);
+    return _relative_jump(utils::get_flag(registers_.status, status_flag::overflow), address);
 }
 
 bool cpu_t::clc(const uint16_t address)
 {
-    _set_flag(status_flag::carry, false);
+    utils::set_flag(registers_.status, status_flag::carry, false);
 
     return false;
 }
 
 bool cpu_t::cld(const uint16_t address)
 {
-    _set_flag(status_flag::decimal, false);
+    utils::set_flag(registers_.status, status_flag::decimal, false);
 
     return false;
 }
 
 bool cpu_t::cli(const uint16_t address)
 {
-    _set_flag(status_flag::no_interrupts, false);
+    utils::set_flag(registers_.status, status_flag::no_interrupts, false);
 
     return false;
 }
 
 bool cpu_t::clv(const uint16_t address)
 {
-    _set_flag(status_flag::overflow, false);
+    utils::set_flag(registers_.status, status_flag::overflow, false);
 
     return false;
 }
@@ -485,9 +485,9 @@ bool cpu_t::cmp(const uint16_t address)
 {
     const uint8_t result = registers_.a - bus_->read(address);
 
-    _set_flag(status_flag::carry, registers_.a >= bus_->read(address));
-    _set_flag(status_flag::zero, result == 0);
-    _set_flag(status_flag::negative, result >> 7);
+    utils::set_flag(registers_.status, status_flag::carry, registers_.a >= bus_->read(address));
+    utils::set_flag(registers_.status, status_flag::zero, result == 0);
+    utils::set_flag(registers_.status, status_flag::negative, result >> 7);
 
     return true;
 }
@@ -496,9 +496,9 @@ bool cpu_t::cpx(const uint16_t address)
 {
     const uint8_t result = registers_.x - bus_->read(address);
 
-    _set_flag(status_flag::carry, registers_.x >= bus_->read(address));
-    _set_flag(status_flag::zero, result == 0);
-    _set_flag(status_flag::negative, result >> 7);
+    utils::set_flag(registers_.status, status_flag::carry, registers_.x >= bus_->read(address));
+    utils::set_flag(registers_.status, status_flag::zero, result == 0);
+    utils::set_flag(registers_.status, status_flag::negative, result >> 7);
 
     return false;
 }
@@ -507,9 +507,9 @@ bool cpu_t::cpy(const uint16_t address)
 {
     const uint8_t result = registers_.y - bus_->read(address);
 
-    _set_flag(status_flag::carry, registers_.y >= bus_->read(address));
-    _set_flag(status_flag::zero, result == 0);
-    _set_flag(status_flag::negative, result >> 7);
+    utils::set_flag(registers_.status, status_flag::carry, registers_.y >= bus_->read(address));
+    utils::set_flag(registers_.status, status_flag::zero, result == 0);
+    utils::set_flag(registers_.status, status_flag::negative, result >> 7);
 
     return false;
 }
@@ -518,8 +518,8 @@ bool cpu_t::dec(const uint16_t address)
 {
     const uint8_t value = bus_->read(address) - 1;
 
-    _set_flag(status_flag::zero, value == 0);
-    _set_flag(status_flag::negative, value >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, value == 0);
+    utils::set_flag(registers_.status, status_flag::negative, value >> 7);
 
     bus_->write(address, value);
 
@@ -530,8 +530,8 @@ bool cpu_t::dex(const uint16_t address)
 {
     registers_.x--;
 
-    _set_flag(status_flag::zero, registers_.x == 0);
-    _set_flag(status_flag::negative, registers_.x >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.x == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.x >> 7);
 
     return false;
 }
@@ -540,8 +540,8 @@ bool cpu_t::dey(const uint16_t address)
 {
     registers_.y--;
 
-    _set_flag(status_flag::zero, registers_.y == 0);
-    _set_flag(status_flag::negative, registers_.y >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.y == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.y >> 7);
 
     return false;
 }
@@ -550,8 +550,8 @@ bool cpu_t::eor(const uint16_t address)
 {
     registers_.a ^= bus_->read(address);
 
-    _set_flag(status_flag::zero, registers_.a == 0);
-    _set_flag(status_flag::negative, registers_.a >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.a == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.a >> 7);
 
     return true;
 }
@@ -560,8 +560,8 @@ bool cpu_t::inc(const uint16_t address)
 {
     const uint8_t value = bus_->read(address) + 1;
 
-    _set_flag(status_flag::zero, value == 0);
-    _set_flag(status_flag::negative, value >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, value == 0);
+    utils::set_flag(registers_.status, status_flag::negative, value >> 7);
 
     bus_->write(address, value);
 
@@ -572,8 +572,8 @@ bool cpu_t::inx(const uint16_t address)
 {
     registers_.x++;
 
-    _set_flag(status_flag::zero, registers_.x == 0);
-    _set_flag(status_flag::negative, registers_.x >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.x == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.x >> 7);
 
     return false;
 }
@@ -582,8 +582,8 @@ bool cpu_t::iny(const uint16_t address)
 {
     registers_.y++;
 
-    _set_flag(status_flag::zero, registers_.y == 0);
-    _set_flag(status_flag::negative, registers_.y >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.y == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.y >> 7);
 
     return false;
 }
@@ -611,8 +611,8 @@ bool cpu_t::lda(const uint16_t address)
 {
     registers_.a = bus_->read(address);
 
-    _set_flag(status_flag::zero, registers_.a == 0);
-    _set_flag(status_flag::negative, registers_.a >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.a == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.a >> 7);
 
     return true;
 }
@@ -621,8 +621,8 @@ bool cpu_t::ldx(const uint16_t address)
 {
     registers_.x = bus_->read(address);
 
-    _set_flag(status_flag::zero, registers_.x == 0);
-    _set_flag(status_flag::negative, registers_.x >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.x == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.x >> 7);
 
     return true;
 }
@@ -631,8 +631,8 @@ bool cpu_t::ldy(const uint16_t address)
 {
     registers_.y = bus_->read(address);
 
-    _set_flag(status_flag::zero, registers_.y == 0);
-    _set_flag(status_flag::negative, registers_.y >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.y == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.y >> 7);
 
     return true;
 }
@@ -641,12 +641,12 @@ bool cpu_t::lsr(const uint16_t address)
 {
     uint8_t value = is_addressing_accumulator_ ? registers_.a : bus_->read(address);
 
-    _set_flag(status_flag::carry, value & 0x01);
+    utils::set_flag(registers_.status, status_flag::carry, value & 0x01);
 
     value = (value >> 1) & 0x7F; // 0 is added to bit 7 
 
-    _set_flag(status_flag::zero, value == 0);
-    _set_flag(status_flag::negative, value >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, value == 0);
+    utils::set_flag(registers_.status, status_flag::negative, value >> 7);
 
     if (is_addressing_accumulator_) registers_.a = value;
     else bus_->write(address, value);
@@ -663,8 +663,8 @@ bool cpu_t::ora(const uint16_t address)
 {
     registers_.a |= bus_->read(address);
 
-    _set_flag(status_flag::zero, registers_.a == 0);
-    _set_flag(status_flag::negative, registers_.a >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.a == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.a >> 7);
 
     return true;
 }
@@ -686,8 +686,8 @@ bool cpu_t::pla(const uint16_t address)
 {
     registers_.a = _pop_stack();
 
-    _set_flag(status_flag::zero, registers_.a == 0);
-    _set_flag(status_flag::negative, registers_.a >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.a == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.a >> 7);
 
     return false;
 }
@@ -703,14 +703,14 @@ bool cpu_t::plp(const uint16_t address)
 bool cpu_t::rol(const uint16_t address)
 {
     uint8_t value = is_addressing_accumulator_ ? registers_.a : bus_->read(address);
-    const bool carry = _get_flag(status_flag::carry);
+    const bool carry = utils::get_flag(registers_.status, status_flag::carry);
 
-    _set_flag(status_flag::carry, value >> 7);
+    utils::set_flag(registers_.status, status_flag::carry, value >> 7);
 
     value = (value << 1) | carry;
 
-    _set_flag(status_flag::zero, value == 0);
-    _set_flag(status_flag::negative, value >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, value == 0);
+    utils::set_flag(registers_.status, status_flag::negative, value >> 7);
 
     if (is_addressing_accumulator_) registers_.a = value;
     else bus_->write(address, value);
@@ -721,14 +721,14 @@ bool cpu_t::rol(const uint16_t address)
 bool cpu_t::ror(const uint16_t address)
 {
     uint8_t value = is_addressing_accumulator_ ? registers_.a : bus_->read(address);
-    const bool carry = _get_flag(status_flag::carry);
+    const bool carry = utils::get_flag(registers_.status, status_flag::carry);
 
-    _set_flag(status_flag::carry, value & 0x01);
+    utils::set_flag(registers_.status, status_flag::carry, value & 0x01);
 
     value = (value >> 1) | (carry << 7);
 
-    _set_flag(status_flag::zero, value == 0);
-    _set_flag(status_flag::negative, value >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, value == 0);
+    utils::set_flag(registers_.status, status_flag::negative, value >> 7);
 
     if (is_addressing_accumulator_) registers_.a = value;
     else bus_->write(address, value);
@@ -761,12 +761,12 @@ bool cpu_t::rts(const uint16_t address)
 bool cpu_t::sbc(const uint16_t address)
 {
     const uint8_t value = bus_->read(address);
-    const int16_t sub = registers_.a - value - !_get_flag(status_flag::carry);
+    const int16_t sub = registers_.a - value - !utils::get_flag(registers_.status, status_flag::carry);
 
-    _set_flag(status_flag::carry, !(sub < 0));
-    _set_flag(status_flag::zero, (sub & 0xFF) == 0);
-    _set_flag(status_flag::overflow, ((registers_.a ^ sub) & (~value ^ sub)) >> 7);
-    _set_flag(status_flag::negative, sub & (1 << 7));
+    utils::set_flag(registers_.status, status_flag::carry, !(sub < 0));
+    utils::set_flag(registers_.status, status_flag::zero, (sub & 0xFF) == 0);
+    utils::set_flag(registers_.status, status_flag::overflow, ((registers_.a ^ sub) & (~value ^ sub)) >> 7);
+    utils::set_flag(registers_.status, status_flag::negative, sub & (1 << 7));
 
     registers_.a = sub & 0xFF;
     return true;
@@ -774,21 +774,21 @@ bool cpu_t::sbc(const uint16_t address)
 
 bool cpu_t::sec(const uint16_t address)
 {
-    _set_flag(status_flag::carry, true);
+    utils::set_flag(registers_.status, status_flag::carry, true);
 
     return false;
 }
 
 bool cpu_t::sed(const uint16_t address)
 {
-    _set_flag(status_flag::decimal, true);
+    utils::set_flag(registers_.status, status_flag::decimal, true);
 
     return false;
 }
 
 bool cpu_t::sei(const uint16_t address)
 {
-    _set_flag(status_flag::no_interrupts, true);
+    utils::set_flag(registers_.status, status_flag::no_interrupts, true);
 
     return false;
 }
@@ -815,8 +815,8 @@ bool cpu_t::tax(const uint16_t address)
 {
     registers_.x = registers_.a;
 
-    _set_flag(status_flag::zero, registers_.x == 0);
-    _set_flag(status_flag::negative, registers_.x >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.x == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.x >> 7);
 
     return false;
 }
@@ -825,8 +825,8 @@ bool cpu_t::tay(const uint16_t address)
 {
     registers_.y = registers_.a;
 
-    _set_flag(status_flag::zero, registers_.y == 0);
-    _set_flag(status_flag::negative, registers_.y >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.y == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.y >> 7);
 
     return false;
 }
@@ -835,8 +835,8 @@ bool cpu_t::tsx(const uint16_t address)
 {
     registers_.x = registers_.sp;
 
-    _set_flag(status_flag::zero, registers_.x == 0);
-    _set_flag(status_flag::negative, registers_.x >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.x == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.x >> 7);
 
     return false;
 }
@@ -845,8 +845,8 @@ bool cpu_t::txa(const uint16_t address)
 {
     registers_.a = registers_.x;
 
-    _set_flag(status_flag::zero, registers_.a == 0);
-    _set_flag(status_flag::negative, registers_.a >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.a == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.a >> 7);
 
     return false;
 }
@@ -862,8 +862,8 @@ bool cpu_t::tya(const uint16_t address)
 {
     registers_.a = registers_.y;
 
-    _set_flag(status_flag::zero, registers_.a == 0);
-    _set_flag(status_flag::negative, registers_.a >> 7);
+    utils::set_flag(registers_.status, status_flag::zero, registers_.a == 0);
+    utils::set_flag(registers_.status, status_flag::negative, registers_.a >> 7);
 
     return false;
 }
@@ -931,17 +931,6 @@ bool cpu_t::_sre(const uint16_t address)
 
 
 // Helper functions --------------------------------
-bool cpu_t::_get_flag(const status_flag flag)
-{
-    return registers_.status & flag;
-}
-
-void cpu_t::_set_flag(const status_flag flag, const bool value)
-{
-    if (value) registers_.status |= flag;
-    else registers_.status &= ~flag;
-}
-
 void cpu_t::_push_stack(const uint8_t value)
 {
     bus_->write(STACK_BASE + registers_.sp--, value);
@@ -960,8 +949,8 @@ void cpu_t::_basic_interrupt(const uint16_t vector, const uint8_t cycles)
 
     registers_.pc = bus_->read(vector) + (bus_->read(vector + 1) << 8);
 
-    _set_flag(status_flag::unused, true);
-    _set_flag(status_flag::no_interrupts, true);
+    utils::set_flag(registers_.status, status_flag::unused, true);
+    utils::set_flag(registers_.status, status_flag::no_interrupts, true);
 
     cycles_ = cycles;
 }
