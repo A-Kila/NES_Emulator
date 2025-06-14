@@ -2,6 +2,7 @@
 
 #include "../SDL_tools/sdl_graphics.h"
 #include "../SDL_tools/sdl_events.h"
+#include "../SDL_tools/sdl_joypad.h"
 #include "ppu.h"
 
 namespace NES {
@@ -12,10 +13,11 @@ const uint32_t TEMP_HEIGHT = 240;
 nes_t::nes_t(const std::string &filename) :
     graphics_(std::make_shared<SDL::sdl_graphics_t>(ppu_t::PICTURE_WIDTH, ppu_t::PICTURE_HEIGHT)),
     events_(std::make_shared<SDL::sdl_events_t>()),
+    joypad_(std::make_shared<SDL::sdl_joypad_t>()),
     cartridge_(std::make_shared<cartridge_t>(filename)),
     ppu_bus_(std::make_shared<ppu_bus_t>(cartridge_)),
     ppu_(std::make_shared<ppu_t>(ppu_bus_)),
-    main_bus_(std::make_shared<main_bus_t>(ppu_, cartridge_)),
+    main_bus_(std::make_shared<main_bus_t>(ppu_, cartridge_, joypad_)),
     cpu_(main_bus_)
 {
     reset();
@@ -44,6 +46,9 @@ void nes_t::run()
             case nes_event::QUIT:
                 quit = true;
                 break;
+
+            case nes_event::KEY_CHANGED:
+                joypad_->update_keys();
 
             default:
                 break;

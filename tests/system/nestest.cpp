@@ -37,7 +37,9 @@ TEST(NestestSystemTest, TestCpuState)
     auto ppu_bus_t = std::make_shared<NES::ppu_bus_t>(cartridge);
     auto ppu = std::make_shared<NES::ppu_t>(ppu_bus_t);
 
-    auto bus = std::make_shared<NES::main_bus_t>(ppu, cartridge);
+    auto joypad_stub = std::make_shared<joypad_stub_t>();
+
+    auto bus = std::make_shared<NES::main_bus_t>(ppu, cartridge, joypad_stub);
     NES::cpu_t cpu(bus);
 
     cpu.set_reset_vector(0xC000);

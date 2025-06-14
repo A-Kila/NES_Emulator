@@ -1,6 +1,7 @@
 #include <vector>
 #include "nes/bus.h"
 #include "nes/cpu.h"
+#include "nes/joypad.h"
 
 namespace NES_test {
 
@@ -44,6 +45,11 @@ public:
 private:
     uint8_t ram[0x10000];
     uint32_t size_;
+};
+
+class joypad_stub_t : public NES::joypad_t
+{
+    void update_keys() override {}
 };
 
 typedef std::shared_ptr<NES::cpu_t> cpu_ref_t;

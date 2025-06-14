@@ -8,6 +8,7 @@ namespace NES {
 enum nes_event
 {
     NO_EVENT = 0,
+    KEY_CHANGED = 1,
     QUIT
 };
 

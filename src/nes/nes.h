@@ -31,6 +31,7 @@ private:
 private:
     graphics_ref_t graphics_;
     events_ref_t events_;
+    joypad_ref_t joypad_;
 
     cartridge_ref_t cartridge_;
     bus_ref_t ppu_bus_;
