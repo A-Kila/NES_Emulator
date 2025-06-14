@@ -21,7 +21,13 @@ public:
     uint8_t read_ppu(uint16_t addr) const;
     void write_ppu(uint16_t addr, uint8_t data);
 
-public: // FIXME: needs to be private, just a temp
+    enum mirroring_mode
+    {
+        HORIZONTAL_MIRRORING,
+        VERTICAL_MIRRORING
+    } mirroring_mode;
+
+private:
     bool is_valid_;
 
     mapper_ref_t mapper_;

@@ -4,13 +4,14 @@
 #include "bus.h" 
 #include "ram.h"
 #include "cartridge/cartridge.h"
+#include "ppu.h"
 
 namespace NES {
 
 class main_bus_t : public i_bus_t
 {
 public:
-    main_bus_t(cartridge_ref_t cartridge);
+    main_bus_t(ppu_ref_t ppu, cartridge_ref_t cartridge);
     virtual ~main_bus_t();
 
     void write(uint16_t addr, uint8_t data) override;
@@ -24,6 +25,7 @@ private:
 
 private:
     ram_t ram_;
+    ppu_ref_t ppu_;
     cartridge_ref_t cartridge_;
 };
 

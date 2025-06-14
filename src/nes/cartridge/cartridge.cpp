@@ -44,6 +44,8 @@ bool cartridge_t::load(const std::string &filename)
         cartridge_file.read((char *)trainer_data, TRAINER_SIZE);
     }
 
+    mirroring_mode = (header_.flags_6 & 0x01) ? VERTICAL_MIRRORING : HORIZONTAL_MIRRORING;
+
     prg_rom_.resize(header_.prg_rom_banks * PRG_ROM_BANK_SIZE);
     cartridge_file.read((char *)prg_rom_.data(), prg_rom_.size());
 

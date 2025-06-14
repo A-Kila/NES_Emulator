@@ -18,6 +18,9 @@ private:
     SDL_Window *window_;
     SDL_Renderer *renderer_;
     SDL_Texture *texture_;
+
+    uint32_t texture_width_;
+    uint32_t texture_height_;
 };
 
 } // namespace SDL

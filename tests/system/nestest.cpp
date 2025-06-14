@@ -3,7 +3,9 @@
 #include "nes/cpu.h"
 #include "nes/main_bus.h"
 #include "nes/cartridge/cartridge.h"
+#include "nes/ppu.h"
 #include "../utils.h"
+#include "nes/ppu_bus.h"
 
 #define STRING(x) #x
 #define XSTRING(x) STRING(x)
@@ -32,7 +34,10 @@ TEST(NestestSystemTest, TestCpuState)
     auto cartridge = std::make_shared<NES::cartridge_t>(ROM_FILE_PATH);
     ASSERT_TRUE(cartridge->is_valid()) << "Failed to load cartridge from file: " << ROM_FILE_PATH;
 
-    auto bus = std::make_shared<NES::main_bus_t>(cartridge);
+    auto ppu_bus_t = std::make_shared<NES::ppu_bus_t>(cartridge);
+    auto ppu = std::make_shared<NES::ppu_t>(ppu_bus_t);
+
+    auto bus = std::make_shared<NES::main_bus_t>(ppu, cartridge);
     NES::cpu_t cpu(bus);
 
     cpu.set_reset_vector(0xC000);

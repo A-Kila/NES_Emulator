@@ -6,23 +6,25 @@
 
 namespace SDL {
 
-sdl_graphics_t::sdl_graphics_t(uint32_t width, uint32_t height)
+sdl_graphics_t::sdl_graphics_t(uint32_t width, uint32_t height) :
+    texture_width_(width),
+    texture_height_(height)
 {
     assert(
         SDL_CreateWindowAndRenderer("NES Emulator",
-            2 * width, 2 * height,
+            2 * texture_width_, 2 * texture_height_,
             SDL_WINDOW_RESIZABLE,
             &window_, &renderer_)
         && "Window and render could not be created"
     );
 
-    SDL_SetRenderLogicalPresentation(renderer_, width, height, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+    SDL_SetRenderLogicalPresentation(renderer_, texture_width_, texture_height_, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
     texture_ = SDL_CreateTexture(
         renderer_,
         SDL_PIXELFORMAT_ARGB8888,
         SDL_TEXTUREACCESS_STREAMING,
-        width, height);
+        texture_width_, texture_height_);
 
     SDL_SetTextureScaleMode(texture_, SDL_SCALEMODE_PIXELART);
 }
@@ -36,7 +38,7 @@ sdl_graphics_t::~sdl_graphics_t()
 
 void sdl_graphics_t::update_frame(uint32_t *pixel_data)
 {
-    SDL_UpdateTexture(texture_, nullptr, pixel_data, 200 * sizeof(uint32_t));
+    SDL_UpdateTexture(texture_, nullptr, pixel_data, texture_width_ * sizeof(uint32_t));
     SDL_RenderClear(renderer_);
     SDL_RenderTexture(renderer_, texture_, NULL, NULL);
     SDL_RenderPresent(renderer_);

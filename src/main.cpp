@@ -10,12 +10,10 @@
 
 int main(int argc, char *argv[])
 {
-    assert(argc == 2 && "Usage: nes_emulator $filepath");
+    // assert(argc == 2 && "Usage: nes_emulator $filepath");
 
-    for (int i = 0; i < argc; i++)
-        printf("argv %d: %s\n", i, argv[i]);
-
-    const std::string cartridge = argv[1];
+    const std::string cartridge = "../../build/tests/system/resources/donkey_kong.nes"; //argv[1];
+    // const std::string cartridge = "../../build/tests/system/resources/nestest.nes"; //argv[1]; 
 
     SDL::sdl_init_t sdl_init;
     NES::nes_t nes(cartridge);
