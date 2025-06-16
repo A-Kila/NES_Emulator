@@ -4,7 +4,9 @@
 
 namespace NES {
 
-joypad_t::joypad_t()
+joypad_t::joypad_t() :
+    joypads_(),
+    shift_regs_()
 {
 }
 

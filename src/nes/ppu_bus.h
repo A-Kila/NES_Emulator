@@ -31,8 +31,8 @@ private:
 private:
     cartridge_ref_t cartridge_;
 
-    uint8_t palette_ram[PALETTE_RAM_MIRROR_MASK + 1];
-    uint8_t nametables[2][NAMETABLE_SIZE];
+    uint8_t palette_ram_[PALETTE_RAM_MIRROR_MASK + 1];
+    uint8_t nametables_[2][NAMETABLE_SIZE];
 };
 
 } // namespace NES

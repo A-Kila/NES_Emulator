@@ -36,11 +36,12 @@ uint8_t main_bus_t::read(uint16_t addr)
 
     if (utils::is_addr_in_range(addr, RAM_ADDR_RANGE)) return ram_.read(addr);
     else if (utils::is_addr_in_range(addr, PPU_ADDR_RANGE)) return ppu_->read(addr);
-    else if (utils::is_addr_in_range(addr, APU_ADDR_RANGE)); // TODO: Fill after APU implementation
+    else if (utils::is_addr_in_range(addr, APU_ADDR_RANGE)) return 0xFF; // TODO: Fill after APU implementation
     else if (utils::is_addr_in_range(addr, IO_ADDR_RANGE)) return joypad_->get_input(addr & 0x0001);
     else if (utils::is_addr_in_range(addr, TEST_ADDR_RANGE)) assert(false && "test mode is not yet implemented");
     else if (utils::is_addr_in_range(addr, CARTRIDGE_ADDR_RANGE)) return cartridge_->read_cpu(addr);
 
+    printf("addr: %X\n", addr);
     assert(false && "Address out of range in main bus read operation");
     return 0;
 }

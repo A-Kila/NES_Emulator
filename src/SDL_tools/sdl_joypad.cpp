@@ -5,7 +5,8 @@
 
 namespace SDL {
 
-sdl_joypad_t::sdl_joypad_t() : joypad_t()
+sdl_joypad_t::sdl_joypad_t() :
+    joypad_t()
 {
     keybinds = {
         { SDL_SCANCODE_J,      NES::joypad_t::A },

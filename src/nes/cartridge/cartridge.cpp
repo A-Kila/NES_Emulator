@@ -8,7 +8,10 @@
 namespace NES {
 
 cartridge_t::cartridge_t() :
-    is_valid_(false), mapper_()
+    is_valid_(false),
+    mapper_(),
+    prg_rom_(),
+    chr_rom_()
 {
 }
 

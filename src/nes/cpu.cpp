@@ -11,7 +11,8 @@ namespace NES {
 cpu_t::cpu_t(bus_ref_t bus) :
     bus_(bus),
     registers_(),
-    cycles_()
+    cycles_(),
+    is_addressing_accumulator_()
 {
     instruction_t instructions[] = {
         // * Before instruction name means illegal opcode

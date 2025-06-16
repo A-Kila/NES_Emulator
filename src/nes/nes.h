@@ -39,6 +39,8 @@ private:
     bus_ref_t main_bus_;
     cpu_t cpu_;
 
+    uint32_t cycle_count_;
+
 private:
     static constexpr uint32_t make_argb(uint8_t r, uint8_t g, uint8_t b)
     {

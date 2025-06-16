@@ -9,6 +9,7 @@ namespace NES {
 ppu_t::ppu_t(bus_ref_t ppu_bus) :
     ppu_bus_(ppu_bus),
     scanline_h_(), scanline_v_(),
+    picture_(),
     external_regs_(),
     internal_regs_(),
     bg_next_info_(),
@@ -33,7 +34,11 @@ ppu_t::~ppu_t()
 void ppu_t::clock()
 {
     // first bit is skipped. FIXME: maybe need to skip on even frames
-    if (scanline_v_ == 0 && scanline_h_ == 0) scanline_h_++;
+    if (scanline_v_ == 0 && scanline_h_ == 0)
+    {
+        scanline_h_++;
+        should_render_ = false;
+    }
 
     if (scanline_v_ < PICTURE_HEIGHT || scanline_v_ == SCANLINES_V)
     {
@@ -69,9 +74,6 @@ void ppu_t::clock()
         // TODO: unused/ignored fetches
     }
 
-    if (scanline_v_ == PICTURE_HEIGHT && scanline_h_ == 0) should_render_ = true;
-    if (scanline_v_ == PICTURE_HEIGHT && scanline_h_ == 3) should_render_ = false;
-
     if (scanline_v_ == PICTURE_HEIGHT + 1 && scanline_h_ == 1)
     {
         utils::set_flag(external_regs_.status, status_flag::vblank, true);
@@ -90,9 +92,13 @@ void ppu_t::clock()
     {
         scanline_h_ = 0;
         scanline_v_++;
-    }
 
-    if (scanline_v_ > SCANLINES_V) scanline_v_ = 0; // scanline 261 is pre-render scanline
+        if (scanline_v_ > SCANLINES_V)
+        {
+            scanline_v_ = 0; // scanline 261 is pre-render scanline
+            should_render_ = true;
+        }
+    }
 }
 
 bool ppu_t::get_nmi()
@@ -216,7 +222,7 @@ uint8_t ppu_t::read(uint16_t addr)
 
 uint8_t *ppu_t::get_picture()
 {
-    return should_render_ ? picture_ : 0;
+    return should_render_ ? picture_ : nullptr;
 }
 
 void ppu_t::_fetch_next_tile_id()
@@ -340,15 +346,9 @@ void ppu_t::_update_shifters()
 void ppu_t::_update_pixel()
 {
     if (scanline_h_ == 0) return; // scanline_h = 0 is idle
-    if (scanline_v_ >= PICTURE_HEIGHT && scanline_h_ > PICTURE_WIDTH) return;
+    if (scanline_v_ >= PICTURE_HEIGHT || scanline_h_ > PICTURE_WIDTH) return;
 
     uint16_t color_address = 0x3F00; // palette ram bg address
-
-    // DEBUG
-    // uint16_t bg_addr = 0x1000;
-    // shifters_.pattern_lsbits = bg_next_info_.bg_lsbits << 8;
-    // shifters_.pattern_msbits = ppu_bus_->read(bg_addr + (bg_next_info_.tile_id << 4) + internal_regs_.active_reg.fine_y + 8) << 8;
-    //DEBIG END
 
     if (utils::get_flag(external_regs_.mask, mask_flag::render_background))
     {
@@ -367,10 +367,6 @@ void ppu_t::_update_pixel()
 
     uint8_t color = ppu_bus_->read(color_address);
     picture_[scanline_v_ * PICTURE_WIDTH + (scanline_h_ - 1)] = color;
-
-    // DEBUG
-    // if (bg_next_info_.tile_id != 0x24)
-    //     printf("%X\n", bg_next_info_.tile_id << 4);
 }
 
 }

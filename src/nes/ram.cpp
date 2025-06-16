@@ -1,11 +1,9 @@
 #include "ram.h"
 #include <cassert>
 
-ram_t::ram_t()
+ram_t::ram_t() :
+    memory()
 {
-    // Ram is initilized to 0x00
-    for (uint16_t i = 0; i < RAM_SIZE; i++)
-        memory[i] = 0x00;
 }
 
 ram_t::~ram_t()

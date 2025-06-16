@@ -6,7 +6,9 @@
 namespace NES {
 
 ppu_bus_t::ppu_bus_t(cartridge_ref_t cartridge) :
-    cartridge_(cartridge)
+    cartridge_(cartridge),
+    palette_ram_(),
+    nametables_()
 {
 }
 
@@ -26,7 +28,7 @@ void ppu_bus_t::write(const uint16_t addr, const uint8_t data)
     {
         masked_addr &= PALETTE_RAM_MIRROR_MASK;
         const uint16_t palette_addr = ((masked_addr & 0x03) == 0) ? masked_addr & 0x0F : masked_addr;
-        palette_ram[palette_addr] = data;
+        palette_ram_[palette_addr] = data;
     }
 }
 
@@ -42,7 +44,7 @@ uint8_t ppu_bus_t::read(const uint16_t addr)
     {
         masked_addr &= PALETTE_RAM_MIRROR_MASK;
         const uint16_t palette_addr = ((masked_addr & 0x03) == 0) ? masked_addr & 0x0F : masked_addr;
-        return palette_ram[palette_addr];
+        return palette_ram_[palette_addr];
     }
 
     return 0;
@@ -53,7 +55,7 @@ void ppu_bus_t::_nametable_write(const uint16_t addr, const uint8_t data)
     const uint16_t addr_in_nametable = addr & NAMETABLE_MIRROR_MASK;
     uint16_t nametable_index = _get_nametable_index(addr);
 
-    nametables[nametable_index][addr_in_nametable] = data;
+    nametables_[nametable_index][addr_in_nametable] = data;
 }
 
 uint8_t ppu_bus_t::_nametable_read(const uint16_t addr)
@@ -61,7 +63,7 @@ uint8_t ppu_bus_t::_nametable_read(const uint16_t addr)
     const uint16_t addr_in_nametable = addr & NAMETABLE_MIRROR_MASK;
     uint16_t nametable_index = _get_nametable_index(addr);
 
-    return nametables[nametable_index][addr_in_nametable];
+    return nametables_[nametable_index][addr_in_nametable];
 }
 
 uint16_t ppu_bus_t::_get_nametable_index(const uint16_t addr)

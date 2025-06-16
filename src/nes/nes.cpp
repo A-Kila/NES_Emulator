@@ -4,6 +4,7 @@
 #include "../SDL_tools/sdl_events.h"
 #include "../SDL_tools/sdl_joypad.h"
 #include "ppu.h"
+#include "utils.h"
 
 namespace NES {
 
@@ -18,7 +19,8 @@ nes_t::nes_t(const std::string &filename) :
     ppu_bus_(std::make_shared<ppu_bus_t>(cartridge_)),
     ppu_(std::make_shared<ppu_t>(ppu_bus_)),
     main_bus_(std::make_shared<main_bus_t>(ppu_, cartridge_, joypad_)),
-    cpu_(main_bus_)
+    cpu_(main_bus_),
+    cycle_count_()
 {
     reset();
 }
@@ -55,14 +57,16 @@ void nes_t::run()
             }
         }
 
-        _clock();
-
-        uint8_t *pixel_data = ppu_->get_picture();
-        if (pixel_data)
+        utils::timer_t timer;
+        uint8_t *pixel_data{ nullptr };
+        while (!pixel_data)
         {
-            _get_screen_argb(screen, pixel_data);
-            graphics_->update_frame(screen);
+            _clock();
+            pixel_data = ppu_->get_picture();
         }
+
+        _get_screen_argb(screen, pixel_data);
+        graphics_->update_frame(screen);
     }
 }
 
@@ -73,9 +77,9 @@ void nes_t::set_reset_vector(uint16_t address)
 
 void nes_t::_clock()
 {
-    for (int i = 0; i < 3; i++) ppu_->clock(); // PPU runs 3x faster than CPU
+    ppu_->clock();
 
-    cpu_.clock();
+    if (cycle_count_++ % 3 == 0) cpu_.clock(); // PPU runs 3x faster than CPU
 
     if (ppu_->get_nmi())
     {
