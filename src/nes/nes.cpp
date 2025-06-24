@@ -38,6 +38,9 @@ void nes_t::run()
 {
     uint32_t screen[ppu_t::PICTURE_WIDTH * ppu_t::PICTURE_HEIGHT];
 
+    utils::timer_t timer;
+    float time_for_frame_ms = 1000.0f / TARGET_FPS;
+
     bool quit = false;
     while (!quit)
     {
@@ -57,7 +60,9 @@ void nes_t::run()
             }
         }
 
-        utils::timer_t timer;
+        if (timer.get_elapsed_ms() < time_for_frame_ms) continue;
+        timer.reset();
+
         uint8_t *pixel_data{ nullptr };
         while (!pixel_data)
         {

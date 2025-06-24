@@ -46,6 +46,8 @@ private:
     {
         return 0xFF000000u | (r << 16) | (g << 8) | b;
     };
+
+    static constexpr float TARGET_FPS = 60;
 };
 
 } // namespace NES

@@ -20,5 +20,30 @@ void set_flag(uint8_t &status, const uint8_t flag, const bool value)
     else status &= ~flag;
 }
 
+timer_t::timer_t()
+{
+    last_time_ = std::chrono::high_resolution_clock::now();
+}
+
+timer_t::~timer_t()
+{
+}
+
+float timer_t::get_elapsed_ms()
+{
+    auto end = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration<float>(end - last_time_).count() * 1000.0f;
+}
+
+void timer_t::print_elapsed_ms()
+{
+    printf("MS %f\n", get_elapsed_ms());
+}
+
+void timer_t::reset()
+{
+    last_time_ = std::chrono::high_resolution_clock::now();
+}
+
 } // namespace utils
 } // namespace NES
