@@ -1,7 +1,7 @@
 #pragma once
 
 #include <utility>
-#include "bus.h" 
+#include "interfaces/bus.h" 
 #include "ram.h"
 #include "cartridge/cartridge.h"
 #include "ppu.h"

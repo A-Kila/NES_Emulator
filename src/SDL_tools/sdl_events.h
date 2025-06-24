@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../nes/events.h"
+#include "../nes/interfaces/events.h"
 
 #include "SDL3/SDL.h"
 

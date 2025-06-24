@@ -1,5 +1,5 @@
 #include "cpu.h"
-#include "bus.h"
+#include "interfaces/bus.h"
 #include "utils.h"
 #include <_types/_uint16_t.h>
 #include <_types/_uint8_t.h>

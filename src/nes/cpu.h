@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <vector>
-#include "bus.h"
+#include "interfaces/bus.h"
 
 namespace NES {
 

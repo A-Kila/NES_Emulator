@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../nes/graphics.h"
+#include "../nes/interfaces/graphics.h"
 
 #include "SDL3/SDL.h"
 

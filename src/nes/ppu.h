@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "bus.h"
+#include "interfaces/bus.h"
 
 namespace NES {
 

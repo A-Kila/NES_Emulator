@@ -1,5 +1,5 @@
 #include <vector>
-#include "nes/bus.h"
+#include "nes/interfaces/bus.h"
 #include "nes/cpu.h"
 #include "nes/joypad.h"
 

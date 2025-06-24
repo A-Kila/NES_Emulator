@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include "events.h"
-#include "graphics.h"
+#include "interfaces/events.h"
+#include "interfaces/graphics.h"
 #include "cartridge/cartridge.h"
 #include "main_bus.h"
 #include "ppu_bus.h"

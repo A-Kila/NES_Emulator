@@ -1,5 +1,5 @@
 #include "ppu.h"
-#include "bus.h"
+#include "interfaces/bus.h"
 #include "utils.h"
 #include <algorithm>
 #include <cassert>

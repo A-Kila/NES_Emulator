@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "../definitions.h"
+#include "../interfaces/definitions.h"
 
 namespace NES {
 

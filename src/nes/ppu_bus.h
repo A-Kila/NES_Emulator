@@ -1,7 +1,7 @@
 #pragma once
 
 #include <utility>
-#include "bus.h"
+#include "interfaces/bus.h"
 #include "cartridge/cartridge.h"
 
 namespace NES {
