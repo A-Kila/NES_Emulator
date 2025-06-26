@@ -12,5 +12,6 @@ INTERFACE i_bus_t
 };
 
 typedef std::shared_ptr<i_bus_t> bus_ref_t;
+typedef std::weak_ptr<i_bus_t> bus_weak_ref_t;
 
 } // namespace NES

@@ -134,11 +134,11 @@ void ppu_t::write(uint16_t addr, uint8_t data)
         break;
 
     case ppu_register_addr::oam_address:
-        // TODO: implemet
+        oam_addr_ = data;
         break;
 
     case ppu_register_addr::oam_data:
-        // TODO: implement
+        write_oam(oam_addr_, data);
         break;
 
     case ppu_register_addr::scroll:
@@ -195,12 +195,8 @@ uint8_t ppu_t::read(uint16_t addr)
         internal_regs_.write_toggle = false;
         break;
 
-    case ppu_register_addr::oam_address:
-        // TODO: implemet
-        break;
-
     case ppu_register_addr::oam_data:
-        // TODO: implement
+        return_data = ((uint8_t *)oam_)[oam_addr_];
         break;
 
     case ppu_register_addr::data:
@@ -218,6 +214,11 @@ uint8_t ppu_t::read(uint16_t addr)
     }
 
     return return_data;
+}
+
+void ppu_t::write_oam(uint8_t addr, uint8_t data)
+{
+    ((uint8_t *)oam_)[addr] = data;
 }
 
 uint8_t *ppu_t::get_picture()

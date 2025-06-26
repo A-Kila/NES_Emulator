@@ -8,6 +8,7 @@
 #include "ppu_bus.h"
 #include "cpu.h"
 #include "ppu.h"
+#include "dma_transfer.h"
 
 namespace NES {
 
@@ -36,6 +37,7 @@ private:
     cartridge_ref_t cartridge_;
     bus_ref_t ppu_bus_;
     ppu_ref_t ppu_;
+    dma_transfer_ref_t dma_transfer_;
     bus_ref_t main_bus_;
     cpu_t cpu_;
 

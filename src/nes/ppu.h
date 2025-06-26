@@ -18,6 +18,8 @@ public:
     void write(uint16_t addr, uint8_t data);
     uint8_t read(uint16_t addr);
 
+    void write_oam(uint8_t addr, uint8_t data);
+
     uint8_t *get_picture();
 
 public:
@@ -50,8 +52,7 @@ private:
         oam_data,
         scroll,
         address,
-        data,
-        oam_dma = -1, // Special register with different address // FIXME: no idea yet
+        data
     };
     static constexpr uint8_t NUM_REGISTERS = ppu_register_addr::data + 1;
 
@@ -133,6 +134,24 @@ private:
         uint16_t pattern_msbits;
     } shifters_;
 
+    static constexpr uint16_t OAM_SIZE = 64;
+    struct
+    {
+        uint8_t y_pos;
+        uint8_t tile_id;
+
+        struct
+        {
+            uint8_t pallete : 2; // From (4 to 7)
+            uint8_t unused : 3;
+            uint8_t priority : 1; // 0 - In front of BG, 1 - behind BG
+            uint8_t flip_h : 1;
+            uint8_t flip_v : 1;
+        } attributes;
+
+        uint8_t x_pos;
+    } oam_[OAM_SIZE];
+    uint8_t oam_addr_;
 
     uint8_t read_buffer_; // PPUDATA read is a delayed operation, it returns data from internal buffer updating it
     bool nmi_needed_;

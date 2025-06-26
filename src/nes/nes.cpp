@@ -18,10 +18,12 @@ nes_t::nes_t(const std::string &filename) :
     cartridge_(std::make_shared<cartridge_t>(filename)),
     ppu_bus_(std::make_shared<ppu_bus_t>(cartridge_)),
     ppu_(std::make_shared<ppu_t>(ppu_bus_)),
-    main_bus_(std::make_shared<main_bus_t>(ppu_, cartridge_, joypad_)),
+    dma_transfer_(std::make_shared<dma_transfer_t>(ppu_)),
+    main_bus_(std::make_shared<main_bus_t>(ppu_, cartridge_, joypad_, dma_transfer_)),
     cpu_(main_bus_),
     cycle_count_()
 {
+    dma_transfer_->set_bus(main_bus_);
     reset();
 }
 
@@ -54,6 +56,7 @@ void nes_t::run()
 
             case nes_event::KEY_CHANGED:
                 joypad_->update_keys();
+                break;
 
             default:
                 break;
@@ -84,7 +87,11 @@ void nes_t::_clock()
 {
     ppu_->clock();
 
-    if (cycle_count_++ % 3 == 0) cpu_.clock(); // PPU runs 3x faster than CPU
+    if (cycle_count_++ % 3 == 0)
+    {
+        if (dma_transfer_->is_dma_started()) dma_transfer_->clock(cycle_count_);
+        else cpu_.clock(); // PPU runs 3x faster than CPU
+    }
 
     if (ppu_->get_nmi())
     {

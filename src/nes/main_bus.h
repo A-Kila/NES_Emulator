@@ -1,6 +1,7 @@
 #pragma once
 
 #include <utility>
+#include "dma_transfer.h"
 #include "interfaces/bus.h" 
 #include "ram.h"
 #include "cartridge/cartridge.h"
@@ -12,7 +13,7 @@ namespace NES {
 class main_bus_t : public i_bus_t
 {
 public:
-    main_bus_t(ppu_ref_t ppu, cartridge_ref_t cartridge, joypad_ref_t joypad);
+    main_bus_t(ppu_ref_t ppu, cartridge_ref_t cartridge, joypad_ref_t joypad, dma_transfer_ref_t dma_transfer);
     virtual ~main_bus_t();
 
     void write(uint16_t addr, uint8_t data) override;
@@ -21,6 +22,7 @@ public:
 private:
     static constexpr auto RAM_ADDR_RANGE = std::make_pair(0x0000, 0x1FFF);
     static constexpr auto PPU_ADDR_RANGE = std::make_pair(0x2000, 0x3FFF);
+    static constexpr auto DMA_ADDR_RANGE = std::make_pair(0x4014, 0x4014);
     static constexpr auto APU_ADDR_RANGE = std::make_pair(0x4000, 0x4015);
     static constexpr auto IO_ADDR_RANGE = std::make_pair(0x4016, 0x4017);
     static constexpr auto TEST_ADDR_RANGE = std::make_pair(0x4018, 0x401F);
@@ -31,6 +33,7 @@ private:
     ppu_ref_t ppu_;
     cartridge_ref_t cartridge_;
     joypad_ref_t joypad_;
+    dma_transfer_ref_t dma_transfer_;
 };
 
 } // namespace NES

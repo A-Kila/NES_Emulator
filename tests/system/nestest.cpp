@@ -6,6 +6,7 @@
 #include "nes/ppu.h"
 #include "../utils.h"
 #include "nes/ppu_bus.h"
+#include "nes/dma_transfer.h"
 
 #define STRING(x) #x
 #define XSTRING(x) STRING(x)
@@ -39,8 +40,10 @@ TEST(NestestSystemTest, TestCpuState)
 
     auto joypad_stub = std::make_shared<joypad_stub_t>();
 
-    auto bus = std::make_shared<NES::main_bus_t>(ppu, cartridge, joypad_stub);
+    auto dma_transfer = std::make_shared<NES::dma_transfer_t>(ppu);
+    auto bus = std::make_shared<NES::main_bus_t>(ppu, cartridge, joypad_stub, dma_transfer);
     NES::cpu_t cpu(bus);
+    dma_transfer->set_bus(bus);
 
     cpu.set_reset_vector(0xC000);
     cpu.reset(); // Reset the CPU
