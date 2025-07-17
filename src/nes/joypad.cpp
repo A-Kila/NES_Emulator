@@ -21,8 +21,8 @@ void joypad_t::update_joypad(const bool is_second)
 
 bool joypad_t::get_input(const bool is_second)
 {
-    bool is_pressed = (joypads_[is_second] & 0x80) > 0;
-    joypads_[is_second] <<= 1;
+    bool is_pressed = (shift_regs_[is_second] & 0x80) > 0;
+    shift_regs_[is_second] <<= 1;
 
     return is_pressed;
 }
