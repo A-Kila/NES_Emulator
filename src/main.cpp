@@ -12,8 +12,9 @@ int main(int argc, char *argv[])
 {
     // assert(argc == 2 && "Usage: nes_emulator $filepath");
 
-    const std::string cartridge = "../../build/tests/system/resources/donkey_kong.nes"; //argv[1];
+    // const std::string cartridge = "../../build/tests/system/resources/donkey_kong.nes"; //argv[1];
     // const std::string cartridge = "../../build/tests/system/resources/nestest.nes"; //argv[1]; 
+    const std::string cartridge = "../../build/tests/system/resources/super_mario_bros.nes"; //argv[1];
 
     SDL::sdl_init_t sdl_init;
     NES::nes_t nes(cartridge);
