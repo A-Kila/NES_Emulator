@@ -413,7 +413,8 @@ void ppu_t::_render_sprites()
                     if (sprite_count_ < MAX_SPRITES_PER_SCANLINE)
                         sprite_scanline_[sprite_count_] = oam;
 
-                    is_sprite_zero_ = oam_entry == 0;
+                    if (oam_entry == 0) is_sprite_zero_ = true;
+
                     sprite_count_++;
                 }
             }
@@ -479,12 +480,13 @@ void ppu_t::_render_sprites()
 
 void ppu_t::_update_bg_pixel()
 {
+    is_bg_rendered_ = false;
+
     if (scanline_h_ == 0) return; // scanline_h = 0 is idle
     if (scanline_v_ >= PICTURE_HEIGHT || scanline_h_ > PICTURE_WIDTH) return;
 
     uint16_t color_address = PALLETE_ADDR_START; // palette ram bg address
 
-    is_bg_rendered_ = false;
     if (utils::get_flag(external_regs_.mask, mask_flag::render_background))
     {
         uint16_t bit_mask = 0x8000 >> internal_regs_.fine_x;
