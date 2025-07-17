@@ -348,7 +348,7 @@ void ppu_t::_render_bg()
 {
     if (scanline_v_ < PICTURE_HEIGHT || scanline_v_ == SCANLINES_V)
     {
-        if ((scanline_h_ > 0 && scanline_h_ < PICTURE_WIDTH) || ((scanline_h_ >= 321) & (scanline_h_ < 338)))
+        if ((scanline_h_ > 1 && scanline_h_ <= PICTURE_WIDTH) || ((scanline_h_ >= 321) & (scanline_h_ < 338)))
         {
             _update_shifters();
 
