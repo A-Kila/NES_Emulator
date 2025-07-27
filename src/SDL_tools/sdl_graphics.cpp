@@ -18,6 +18,11 @@ sdl_graphics_t::sdl_graphics_t(uint32_t width, uint32_t height) :
         && "Window and render could not be created"
     );
 
+    assert(
+        SDL_SetRenderVSync(renderer_, 1) // 1 means that synchrinization happens with every vertical refresh
+        && "VSync could not be set"
+    );
+
     SDL_SetRenderLogicalPresentation(renderer_, texture_width_, texture_height_, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
     texture_ = SDL_CreateTexture(
