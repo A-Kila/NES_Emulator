@@ -7,7 +7,6 @@
 
 namespace NES {
 
-// TODO: maybe refactor in a map
 cpu_t::cpu_t(bus_ref_t bus) :
     bus_(bus),
     registers_(),

@@ -205,10 +205,10 @@ void ppu_t::_fetch_next_attribute()
 {
     static constexpr uint16_t ATTIRBUTE_MEMORY_START = 0x23C0;
 
-    const uint16_t nametable_addr = internal_regs_.active_reg.reg & 0x0C00;// nametable_x and nametable_y
+    const uint16_t nametable_addr = internal_regs_.active_reg.reg & 0x0C00; // nametable_x and nametable_y
 
     const uint16_t tile_pos = (internal_regs_.active_reg.coarse_x >> 2)
-        | ((internal_regs_.active_reg.coarse_y >> 2) << 3);  // last two bits give sections in a byte
+        | ((internal_regs_.active_reg.coarse_y >> 2) << 3); // last two bits give sections in a byte
 
     uint8_t attribute_byte = ppu_bus_->read(ATTIRBUTE_MEMORY_START | nametable_addr | tile_pos); // 0xaabbccdd
 
@@ -334,9 +334,9 @@ void ppu_t::_update_shifters()
     }
 }
 
+// code from: https://stackoverflow.com/questions/2602823
 uint8_t ppu_t::_flip_byte(uint8_t byte)
 {
-    // code from: https://stackoverflow.com/questions/2602823
     byte = (byte & 0xF0) >> 4 | (byte & 0x0F) << 4;
     byte = (byte & 0xCC) >> 2 | (byte & 0x33) << 2;
     byte = (byte & 0xAA) >> 1 | (byte & 0x55) << 1;
@@ -558,4 +558,4 @@ void ppu_t::_update_sprite_pixel()
     picture_[scanline_v_ * PICTURE_WIDTH + (scanline_h_ - 1)] = color;
 }
 
-}
+} // namespace NES

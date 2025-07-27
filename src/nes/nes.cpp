@@ -117,5 +117,4 @@ void nes_t::_get_screen_argb(uint32_t *screen, uint8_t *pixels)
         }
 }
 
-
 } // namespace NES
