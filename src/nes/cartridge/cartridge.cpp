@@ -53,6 +53,7 @@ bool cartridge_t::load(const std::string &filename)
     cartridge_file.read((char *)prg_rom_.data(), prg_rom_.size());
 
     chr_rom_.resize(header_.chr_rom_banks * CHR_ROM_BANK_SIZE);
+    if (header_.chr_rom_banks == 0) chr_rom_.resize(CHR_ROM_BANK_SIZE); // If no CHR ROM, allocate CHR_RAMs    
     cartridge_file.read((char *)chr_rom_.data(), chr_rom_.size());
 
     cartridge_file.close();
