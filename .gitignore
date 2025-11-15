@@ -62,3 +62,6 @@ build
 
 # Compiler Cache 
 .cache
+
+# MacOS file explorer files
+.DS_Store
