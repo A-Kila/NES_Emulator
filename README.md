@@ -23,7 +23,7 @@ Run `./nes_emulator PATH_TO_CARTRIDGE_ROM`
 * nrom mapper (mapper 0)
 
 ## Media
-![Super Mario Bros.](https://github.com/A-Kila/NES_Emulator/blob/main/media/NES%20Emulator-Super%20Mario.mov)
+https://github.com/user-attachments/assets/7b8a544c-0f89-4fed-b474-2cdec4fff3d5
 
-
+## Other Notes
 #### Audio is not yet implemented
